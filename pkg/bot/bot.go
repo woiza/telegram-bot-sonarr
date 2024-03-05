@@ -34,7 +34,7 @@ type userAddSeries struct {
 	allTags          []*starr.Tag
 	selectedTags     []int
 	seriesType       string
-	monitored        bool
+	monitor          string
 	addSeriesOptions *sonarr.AddSeriesOptions
 	chatID           int64
 	messageID        int

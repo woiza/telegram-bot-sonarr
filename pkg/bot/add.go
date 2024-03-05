@@ -13,21 +13,20 @@ import (
 )
 
 const (
-	AddSeriesTMDBID           = "ADDSERIES_TMDBID_"
 	AddSeriesYes              = "ADDSERIES_YES"
 	AddSeriesGoBack           = "ADDSERIES_GOBACK"
 	AddSeriesProfileGoBack    = "ADDSERIES_QUALITY_GOBACK"
 	AddSeriesRootFolderGoBack = "ADDSERIES_ROOTFOLDER_GOBACK"
 	AddSeriesTagsGoBack       = "ADDSERIES_TAGSGOBACK"
 	AddSeriesTypeGoBack       = "ADDSERIES_TYPEGOBACK"
+	AddSeriesMonitorGoBack    = "ADDSERIES_MONITORGOBACK"
 	AddSeriesAddOptionsGoBack = "ADDSERIES_ADDOPTIONS_GOBACK"
 	AddSeriesCancel           = "ADDSERIES_CANCEL"
 	AddSeriesTagsDone         = "ADDSERIES_TAGS_DONE"
-	AddSeriesMonSea           = "ADDSERIES_MONSEA"
-	AddSeriesMon              = "ADDSERIES_MON"
-	AddSeriesUnMon            = "ADDSERIES_UNMON"
-	AddSeriesColSea           = "ADDSERIES_COLSEA"
-	AddSeriesColMon           = "ADDSERIES_COLMON"
+	AddSeries                 = "ADDSERIES_VANILLA"
+	AddSeriesMissing          = "ADDSERIES_MISSING"
+	AddSeriesMissingCutOff    = "ADDSERIES_MISSING_CUTOFF"
+	AddSeriesCutOff           = "ADDSERIES_CUTOFF"
 )
 
 func (b *Bot) processAddCommand(update tgbotapi.Update, userID int64, s *sonarr.Sonarr) {
@@ -122,24 +121,24 @@ func (b *Bot) addSeries(update tgbotapi.Update) bool {
 		}
 		// If there are tags, go to the tags step
 		return b.showAddSeriesTags(command)
-	case AddSeriesAddOptionsGoBack:
+	case AddSeriesMonitorGoBack:
 		return b.showAddSeriesType(command)
+	case AddSeriesAddOptionsGoBack:
+		return b.showAddSeriesMonitor(command)
 	case AddSeriesCancel:
 		b.clearState(update)
 		b.sendMessageWithEdit(command, CommandsCleared)
 		return false
 	case AddSeriesTagsDone:
 		return b.showAddSeriesType(command)
-	case AddSeriesMonSea:
-		return b.handleAddSeriesMonSea(update, command)
-	case AddSeriesMon:
-		return b.handleAddSeriesMon(update, command)
-	case AddSeriesUnMon:
-		return b.handleAddSeriesUnMon(update, command)
-	case AddSeriesColSea:
-		return b.handleAddSeriesColSea(update, command)
-	case AddSeriesColMon:
-		return b.handleAddSeriesColMon(update, command)
+	case AddSeries:
+		return b.handleAddSeries(update, command)
+	case AddSeriesMissing:
+		return b.handleAddSeriesMissing(update, command)
+	case AddSeriesMissingCutOff:
+		return b.handleAddSeriesMissingCutoff(update, command)
+	case AddSeriesCutOff:
+		return b.handleAddSeriesCutOff(update, command)
 	default:
 		// Check if it starts with "PROFILE_"
 		if strings.HasPrefix(update.CallbackQuery.Data, "PROFILE_") {
@@ -157,8 +156,12 @@ func (b *Bot) addSeries(update tgbotapi.Update) bool {
 		if strings.HasPrefix(update.CallbackQuery.Data, "TYPE_") {
 			return b.handleAddSeriesType(update, command)
 		}
-		// Check if it starts with "ADDSERIES_TMDBID_"
-		if strings.HasPrefix(update.CallbackQuery.Data, AddSeriesTMDBID) {
+		// Check if it starts with "MONITOR_"
+		if strings.HasPrefix(update.CallbackQuery.Data, "MONITOR_") {
+			return b.handleAddSeriesMonitor(update, command)
+		}
+		// Check if it starts with "TMDBID_"
+		if strings.HasPrefix(update.CallbackQuery.Data, "TMDBID_") {
 			return b.addSeriesDetails(update, command)
 		}
 		return b.showAddSeriesSearchResults(command)
@@ -186,7 +189,7 @@ func (b *Bot) showAddSeriesSearchResults(command *userAddSeries) bool {
 	for _, series := range series {
 		fmt.Fprintf(&text, "[%v](https://www.imdb.com/title/%v) \\- _%v_\n", utils.Escape(series.Title), series.ImdbID, series.Year)
 		buttonLabels = append(buttonLabels, fmt.Sprintf("%v - %v", series.Title, series.Year))
-		buttonData = append(buttonData, AddSeriesTMDBID+strconv.Itoa(int(series.TvdbID)))
+		buttonData = append(buttonData, "TMDBID_"+strconv.Itoa(int(series.TvdbID)))
 	}
 
 	keyboard := b.createKeyboard(buttonLabels, buttonData)
@@ -218,7 +221,7 @@ func (b *Bot) showAddSeriesSearchResults(command *userAddSeries) bool {
 }
 
 func (b *Bot) addSeriesDetails(update tgbotapi.Update, command *userAddSeries) bool {
-	seriesIDStr := strings.TrimPrefix(update.CallbackQuery.Data, AddSeriesTMDBID)
+	seriesIDStr := strings.TrimPrefix(update.CallbackQuery.Data, "TMDBID_")
 	command.series = command.searchResults[seriesIDStr]
 
 	var text strings.Builder
@@ -445,11 +448,19 @@ func (b *Bot) handleAddSeriesEditSelectTag(update tgbotapi.Update, command *user
 
 func (b *Bot) showAddSeriesType(command *userAddSeries) bool {
 
-	types := []string{"standard", "daily", "anime"}
+	types := []struct {
+		Text string
+		Data string
+	}{
+		{Text: "Standard", Data: "TYPE_standard"},
+		{Text: "Daily / Date", Data: "TYPE_daily"},
+		{Text: "Anime / Absolute", Data: "TYPE_anime"},
+	}
+
 	var typeKeyboard [][]tgbotapi.InlineKeyboardButton
 	for _, t := range types {
 		row := []tgbotapi.InlineKeyboardButton{
-			tgbotapi.NewInlineKeyboardButtonData(t, "TYPE_"+strings.ToUpper(t)),
+			tgbotapi.NewInlineKeyboardButtonData(t.Text, t.Data),
 		}
 		typeKeyboard = append(typeKeyboard, row)
 	}
@@ -475,13 +486,64 @@ func (b *Bot) showAddSeriesType(command *userAddSeries) bool {
 func (b *Bot) handleAddSeriesType(update tgbotapi.Update, command *userAddSeries) bool {
 	command.seriesType = strings.ToLower(strings.TrimPrefix(update.CallbackQuery.Data, "TYPE_"))
 	b.setAddSeriesState(command.chatID, command)
+	return b.showAddSeriesMonitor(command)
+}
+
+func (b *Bot) showAddSeriesMonitor(command *userAddSeries) bool {
+
+	monitorEpisodes := []struct {
+		Text string
+		Data string
+	}{
+		{Text: "All Episodes", Data: "MONITOR_all"},
+		{Text: "Future Episodes", Data: "MONITOR_future"},
+		{Text: "Missing Episodes", Data: "MONITOR_missing"},
+		{Text: "Existing Episodes", Data: "MONITOR_existing"},
+		{Text: "Recent Episodes", Data: "MONITOR_recent"},
+		{Text: "Pilot Episodes", Data: "MONITOR_pilot"},
+		{Text: "First Season", Data: "MONITOR_firstSeason"},
+		{Text: "Last Season", Data: "MONITOR_lastSeason"},
+		{Text: "Monitor Specials", Data: "MONITOR_monitorSpecials"},
+		{Text: "Unmonitor Specials", Data: "MONITOR_unmonitorSpecials"},
+		{Text: "None", Data: "MONITOR_none"},
+	}
+
+	var typeKeyboard [][]tgbotapi.InlineKeyboardButton
+	for _, me := range monitorEpisodes {
+		row := []tgbotapi.InlineKeyboardButton{
+			tgbotapi.NewInlineKeyboardButtonData(me.Text, me.Data),
+		}
+		typeKeyboard = append(typeKeyboard, row)
+	}
+
+	var messageText strings.Builder
+	var keyboard tgbotapi.InlineKeyboardMarkup
+	keyboardGoBack := b.createKeyboard(
+		[]string{"\U0001F519"},
+		[]string{AddSeriesMonitorGoBack},
+	)
+	keyboard.InlineKeyboard = append(keyboard.InlineKeyboard, typeKeyboard...)
+	keyboard.InlineKeyboard = append(keyboard.InlineKeyboard, keyboardGoBack.InlineKeyboard...)
+	messageText.WriteString("Select one monitoring option:")
+	b.sendMessageWithEditAndKeyboard(
+		command,
+		keyboard,
+		messageText.String(),
+	)
+	return false
+
+}
+
+func (b *Bot) handleAddSeriesMonitor(update tgbotapi.Update, command *userAddSeries) bool {
+	command.monitor = strings.TrimPrefix(update.CallbackQuery.Data, "MONITOR_")
+	b.setAddSeriesState(command.chatID, command)
 	return b.showAddSeriesAddOptions(command)
 }
 
 func (b *Bot) showAddSeriesAddOptions(command *userAddSeries) bool {
 	keyboard := b.createKeyboard(
-		[]string{"Add series monitored + search now", "Add series monitored", "Add series unmonitored", "Add collection monitored + search now", "Add collection monitored", "Cancel, clear command", "\U0001F519"},
-		[]string{AddSeriesMonSea, AddSeriesMon, AddSeriesUnMon, AddSeriesColSea, AddSeriesColMon, AddSeriesCancel, AddSeriesAddOptionsGoBack},
+		[]string{"Add", "Add + search missing", "Add + search missing & cutoff unmet", "Add + search cutoff unmnet", "Cancel, clear command", "\U0001F519"},
+		[]string{AddSeries, AddSeriesMissing, AddSeriesMissingCutOff, AddSeriesCutOff, AddSeriesCancel, AddSeriesAddOptionsGoBack},
 	)
 	editMsg := tgbotapi.NewEditMessageTextAndMarkup(
 		command.chatID,
@@ -491,56 +553,41 @@ func (b *Bot) showAddSeriesAddOptions(command *userAddSeries) bool {
 	)
 	editMsg.ParseMode = "MarkdownV2"
 	editMsg.DisableWebPagePreview = true
-	b.setAddSeriesState(command.chatID, command)
 	b.sendMessage(editMsg)
 	return false
 }
 
-func (b *Bot) handleAddSeriesMonSea(update tgbotapi.Update, command *userAddSeries) bool {
-	command.monitored = *starr.True()
+func (b *Bot) handleAddSeries(update tgbotapi.Update, command *userAddSeries) bool {
 	command.addSeriesOptions = &sonarr.AddSeriesOptions{
-		SearchForMissingEpisodes: *starr.True(),
-		//Monitor:                  "seriesOnly",
+		SearchForMissingEpisodes:     *starr.False(),
+		SearchForCutoffUnmetEpisodes: *starr.False(),
 	}
 	b.setAddSeriesState(command.chatID, command)
 	return b.addSeriesToLibrary(update, command)
 }
 
-func (b *Bot) handleAddSeriesMon(update tgbotapi.Update, command *userAddSeries) bool {
-	command.monitored = *starr.True()
+func (b *Bot) handleAddSeriesMissing(update tgbotapi.Update, command *userAddSeries) bool {
 	command.addSeriesOptions = &sonarr.AddSeriesOptions{
-		SearchForMissingEpisodes: *starr.False(),
-		//Monitor:                  "seriesOnly",
+		SearchForMissingEpisodes:     *starr.True(),
+		SearchForCutoffUnmetEpisodes: *starr.False(),
 	}
 	b.setAddSeriesState(command.chatID, command)
 	return b.addSeriesToLibrary(update, command)
 }
 
-func (b *Bot) handleAddSeriesUnMon(update tgbotapi.Update, command *userAddSeries) bool {
-	command.monitored = *starr.False()
+func (b *Bot) handleAddSeriesMissingCutoff(update tgbotapi.Update, command *userAddSeries) bool {
 	command.addSeriesOptions = &sonarr.AddSeriesOptions{
-		SearchForMissingEpisodes: *starr.False(),
-		//Monitor:        "none",
+		SearchForMissingEpisodes:     *starr.True(),
+		SearchForCutoffUnmetEpisodes: *starr.True(),
 	}
 	b.setAddSeriesState(command.chatID, command)
 	return b.addSeriesToLibrary(update, command)
 }
 
-func (b *Bot) handleAddSeriesColSea(update tgbotapi.Update, command *userAddSeries) bool {
-	command.monitored = *starr.True()
+func (b *Bot) handleAddSeriesCutOff(update tgbotapi.Update, command *userAddSeries) bool {
 	command.addSeriesOptions = &sonarr.AddSeriesOptions{
-		SearchForMissingEpisodes: *starr.True(),
-		//Monitor:        "seriesAndCollection",
-	}
-	b.setAddSeriesState(command.chatID, command)
-	return b.addSeriesToLibrary(update, command)
-}
-
-func (b *Bot) handleAddSeriesColMon(update tgbotapi.Update, command *userAddSeries) bool {
-	command.monitored = *starr.True()
-	command.addSeriesOptions = &sonarr.AddSeriesOptions{
-		SearchForMissingEpisodes: *starr.False(),
-		//Monitor:                  "seriesAndCollection",
+		SearchForMissingEpisodes:     *starr.False(),
+		SearchForCutoffUnmetEpisodes: *starr.True(),
 	}
 	b.setAddSeriesState(command.chatID, command)
 	return b.addSeriesToLibrary(update, command)
@@ -550,7 +597,13 @@ func (b *Bot) addSeriesToLibrary(update tgbotapi.Update, command *userAddSeries)
 	var tagIDs []int
 	tagIDs = append(tagIDs, command.selectedTags...)
 
-	// does anyone ever user anything other than announced?
+	var monitor bool
+	if command.monitor == "none" {
+		monitor = *starr.False()
+	} else {
+		monitor = *starr.True()
+	}
+
 	addSeriesInput := sonarr.AddSeriesInput{
 		//MinimumAvailability: "announced",
 		TvdbID:           command.series.TvdbID,
@@ -559,7 +612,8 @@ func (b *Bot) addSeriesToLibrary(update tgbotapi.Update, command *userAddSeries)
 		RootFolderPath:   command.rootFolder,
 		AddOptions:       command.addSeriesOptions,
 		Tags:             tagIDs,
-		Monitored:        command.monitored,
+		Monitored:        monitor,
+		SeasonFolder:     *starr.True(),
 	}
 
 	var messageText string
@@ -570,19 +624,16 @@ func (b *Bot) addSeriesToLibrary(update tgbotapi.Update, command *userAddSeries)
 		b.sendMessage(msg)
 		return false
 	}
-	// series, err := b.SonarrServer.GetSeries((command.series.TvdbID))
-	// if err != nil {
-	// 	msg := tgbotapi.NewMessage(command.chatID, err.Error())
-	// 	fmt.Println(err)
-	// 	b.sendMessage(msg)
-	// 	return false
-	// }
+	series, err := b.SonarrServer.GetSeries((command.series.TvdbID))
+	if err != nil {
+		msg := tgbotapi.NewMessage(command.chatID, err.Error())
+		fmt.Println(err)
+		b.sendMessage(msg)
+		return false
+	}
 
-	// if command.addSeriesOptions.Monitor == "seriesAndCollection" {
-	// 	messageText = fmt.Sprintf("Collection '%v' added\n", series[0].Title)
-	// } else {
-	// 	messageText = fmt.Sprintf("Series'%v' added\n", series[0].Title)
-	// }
+	messageText = fmt.Sprintf("Series'%v' added\n", series[0].Title)
+
 	b.sendMessageWithEdit(command, messageText)
 	b.clearState(update)
 	return true

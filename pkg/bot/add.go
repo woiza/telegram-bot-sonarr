@@ -160,8 +160,8 @@ func (b *Bot) addSeries(update tgbotapi.Update) bool {
 		if strings.HasPrefix(update.CallbackQuery.Data, "MONITOR_") {
 			return b.handleAddSeriesMonitor(update, command)
 		}
-		// Check if it starts with "TMDBID_"
-		if strings.HasPrefix(update.CallbackQuery.Data, "TMDBID_") {
+		// Check if it starts with "TVDBID_"
+		if strings.HasPrefix(update.CallbackQuery.Data, "TVDBID_") {
 			return b.addSeriesDetails(update, command)
 		}
 		return b.showAddSeriesSearchResults(command)
@@ -189,7 +189,7 @@ func (b *Bot) showAddSeriesSearchResults(command *userAddSeries) bool {
 	for _, series := range series {
 		fmt.Fprintf(&text, "[%v](https://www.imdb.com/title/%v) \\- _%v_\n", utils.Escape(series.Title), series.ImdbID, series.Year)
 		buttonLabels = append(buttonLabels, fmt.Sprintf("%v - %v", series.Title, series.Year))
-		buttonData = append(buttonData, "TMDBID_"+strconv.Itoa(int(series.TvdbID)))
+		buttonData = append(buttonData, "TVDBID_"+strconv.Itoa(int(series.TvdbID)))
 	}
 
 	keyboard := b.createKeyboard(buttonLabels, buttonData)
@@ -221,7 +221,7 @@ func (b *Bot) showAddSeriesSearchResults(command *userAddSeries) bool {
 }
 
 func (b *Bot) addSeriesDetails(update tgbotapi.Update, command *userAddSeries) bool {
-	seriesIDStr := strings.TrimPrefix(update.CallbackQuery.Data, "TMDBID_")
+	seriesIDStr := strings.TrimPrefix(update.CallbackQuery.Data, "TVDBID_")
 	command.series = command.searchResults[seriesIDStr]
 
 	var text strings.Builder

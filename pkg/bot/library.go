@@ -36,7 +36,7 @@ func (b *Bot) sendUpcoming(episodes []*sonarr.Episode, msg *tgbotapi.MessageConf
 				seriesMap[episode.SeriesID] = series
 			}
 
-			fmt.Fprintf(&text, "[%v](https://www.imdb.com/title/%v) \\- %v %vx%02d \\- %v\n", series.Title, series.ImdbID, episode.Title, episode.SeasonNumber, episode.EpisodeNumber, episode.AirDateUtc.Format("02 Jan 2006"))
+			fmt.Fprintf(&text, "[%v](https://www.imdb.com/title/%v) %vx%02d \\- %v\n", series.Title, series.ImdbID, episode.SeasonNumber, episode.EpisodeNumber, episode.AirDateUtc.Format("02 Jan 2006"))
 		}
 
 		msg.Text = text.String()

@@ -491,7 +491,7 @@ func (b *Bot) handleAddSeriesType(update tgbotapi.Update, command *userAddSeries
 
 func (b *Bot) showAddSeriesMonitor(command *userAddSeries) bool {
 
-	monitorEpisodes := []struct {
+	monitorTypes := []struct {
 		Text string
 		Data string
 	}{
@@ -509,7 +509,7 @@ func (b *Bot) showAddSeriesMonitor(command *userAddSeries) bool {
 	}
 
 	var typeKeyboard [][]tgbotapi.InlineKeyboardButton
-	for _, me := range monitorEpisodes {
+	for _, me := range monitorTypes {
 		row := []tgbotapi.InlineKeyboardButton{
 			tgbotapi.NewInlineKeyboardButtonData(me.Text, me.Data),
 		}

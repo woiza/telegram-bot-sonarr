@@ -152,10 +152,10 @@ func (b *Bot) HandleUpdate(update tgbotapi.Update) {
 			if !b.addSeries(update) {
 				return
 			}
-		// case DeleteSeriesCommand:
-		// 	if !b.deleteSeries(update) {
-		// 		return
-		// 	}
+		case DeleteSeriesCommand:
+			if !b.deleteSeries(update) {
+				return
+			}
 		// case LibraryMenuCommand:
 		// 	if !b.libraryMenu(update) {
 		// 		return

@@ -32,7 +32,7 @@ func (b *Bot) handleCommand(update tgbotapi.Update, s *sonarr.Sonarr) {
 
 	case "delete", "remove", "Delete", "Remove", "d":
 		b.setActiveCommand(userID, DeleteSeriesCommand)
-		//b.processDeleteCommand(update, userID, s)
+		b.processDeleteCommand(update, userID, s)
 
 	case "clear", "cancel", "stop":
 		b.clearState(update)

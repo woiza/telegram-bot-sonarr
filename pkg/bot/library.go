@@ -1,45 +1,50 @@
 package bot
 
-// import (
-// 	"fmt"
-// 	"sort"
-// 	"strconv"
-// 	"strings"
+import (
+	"fmt"
+	"sort"
+	"strings"
 
-// 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-// 	"github.com/woiza/telegram-bot-sonarr/pkg/utils"
-// 	"golift.io/starr"
-// 	"golift.io/starr/sonarr"
-// )
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"golift.io/starr/sonarr"
+)
 
-// func (b *Bot) sendUpcoming(series []*sonarr.Episode, msg *tgbotapi.MessageConfig) {
-// 	sort.SliceStable(series, func(i, j int) bool {
-// 		return utils.IgnoreArticles(strings.ToLower(series[i].Title)) < utils.IgnoreArticles(strings.ToLower(series[j].Title))
-// 	})
-// 	for i := 0; i < len(series); i += b.Config.MaxItems {
-// 		end := i + b.Config.MaxItems
-// 		if end > len(series) {
-// 			end = len(series)
-// 		}
+func (b *Bot) sendUpcoming(episodes []*sonarr.Episode, msg *tgbotapi.MessageConfig) {
+	sort.SliceStable(episodes, func(i, j int) bool {
+		return episodes[i].AirDateUtc.Before(episodes[j].AirDateUtc)
+	})
 
-// 		//TODO
-// 		//rewrite this for sonarr series
-// 		var text strings.Builder
-// 		for _, series := range series[i:end] {
-// 			if !series.FirstAired.IsZero() {
-// 				fmt.Fprintf(&text, "[%v](https://www.imdb.com/title/%v) \\- first aired %v\n", utils.Escape(series.Title), series.ImdbID, utils.Escape(series.FirstAired.Format("02 Jan 2006")))
-// 			}
-// 			if !series.NextAiring.IsZero() {
-// 				fmt.Fprintf(&text, "[%v](https://www.imdb.com/title/%v) \\- next airing %v\n", utils.Escape(series.Title), series.ImdbID, utils.Escape(series.NextAiring.Format("02 Jan 2006")))
-// 			}
-// 		}
+	seriesMap := make(map[int64]*sonarr.Series)
 
-// 		msg.Text = text.String()
-// 		msg.ParseMode = "MarkdownV2"
-// 		msg.DisableWebPagePreview = true
-// 		b.sendMessage(msg)
-// 	}
-// }
+	for i := 0; i < len(episodes); i += b.Config.MaxItems {
+		end := i + b.Config.MaxItems
+		if end > len(episodes) {
+			end = len(episodes)
+		}
+
+		var text strings.Builder
+		for _, episode := range episodes[i:end] {
+			series, ok := seriesMap[episode.SeriesID]
+			if !ok {
+				var err error
+				series, err = b.SonarrServer.GetSeriesByID(episode.SeriesID)
+				if err != nil {
+					msg.Text = err.Error()
+					b.sendMessage(msg)
+					return
+				}
+				seriesMap[episode.SeriesID] = series
+			}
+
+			fmt.Fprintf(&text, "[%v](https://www.imdb.com/title/%v) \\- %v %vx%02d \\- %v\n", series.Title, series.ImdbID, episode.Title, episode.SeasonNumber, episode.EpisodeNumber, episode.AirDateUtc.Format("02 Jan 2006"))
+		}
+
+		msg.Text = text.String()
+		msg.ParseMode = "MarkdownV2"
+		msg.DisableWebPagePreview = true
+		b.sendMessage(msg)
+	}
+}
 
 // func (b *Bot) getSeriesAsInlineKeyboard(series []*sonarr.Series) [][]tgbotapi.InlineKeyboardButton {
 // 	var inlineKeyboard [][]tgbotapi.InlineKeyboardButton

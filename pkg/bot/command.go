@@ -70,7 +70,7 @@ func (b *Bot) handleCommand(update tgbotapi.Update, s *sonarr.Sonarr) {
 			b.sendMessage(msg)
 			break
 		}
-		//b.sendUpcoming(upcoming, &msg)
+		b.sendUpcoming(upcoming, &msg)
 
 	case "rss", "RSS":
 		command := sonarr.CommandRequest{

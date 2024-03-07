@@ -145,7 +145,7 @@ func (b *Bot) showLibrarySeriesDetail(update tgbotapi.Update, command *userLibra
 	fmt.Fprintf(&message, "Last Manual Search: %s\n", utils.Escape(lastSearchString))
 	fmt.Fprintf(&message, "Size: %d GB\n", series.Statistics.SizeOnDisk/(1024*1024*1024))
 	fmt.Fprintf(&message, "Tags: %s\n", utils.Escape(tagsString))
-	fmt.Fprintf(&message, "Quality Profile: %s\n", utils.Escape(findQualityProfileByID(command.qualityProfiles, series.QualityProfileID).Name))
+	fmt.Fprintf(&message, "Quality Profile: %s\n", utils.Escape(getQualityProfileByID(command.qualityProfiles, series.QualityProfileID).Name))
 	//fmt.Fprintf(&message, "Custom Format Score: %s\n", utils.Escape(customFormatScore))
 
 	messageText := message.String()
@@ -278,11 +278,7 @@ func (b *Bot) handleLibrarySeriesDeleteYes(update tgbotapi.Update, command *user
 }
 
 func (b *Bot) handleLibrarySeriesEdit(command *userLibrary) bool {
-	// b.setLibraryState(command.chatID, command)
-	// b.setActiveCommand(command.chatID, LibrarySeriesEditCommand)
-	//return b.showLibraryMovieEdit(command)
-
-	return false
-	// go to librarymovieedit.to
-
+	b.setLibraryState(command.chatID, command)
+	b.setActiveCommand(command.chatID, LibrarySeriesEditCommand)
+	return b.showLibrarySeriesEdit(command)
 }

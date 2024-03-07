@@ -97,13 +97,22 @@ func removeTag(tags []int, tagID int) []int {
 	return updatedTags
 }
 
-func findQualityProfileByID(qualityProfiles []*sonarr.QualityProfile, qualityProfileID int64) *sonarr.QualityProfile {
+func getQualityProfileByID(qualityProfiles []*sonarr.QualityProfile, qualityProfileID int64) *sonarr.QualityProfile {
 	for _, profile := range qualityProfiles {
 		if profile.ID == qualityProfileID {
 			return profile
 		}
 	}
 	return nil
+}
+
+func getQualityProfileIndexByID(qualityProfiles []*sonarr.QualityProfile, qualityProfileId int64) int {
+	for i, profile := range qualityProfiles {
+		if profile.ID == qualityProfileId {
+			return i
+		}
+	}
+	return -1 // Return an appropriate default or handle the error as needed
 }
 
 func seriesToAddSeriesInput(series *sonarr.Series) *sonarr.AddSeriesInput {

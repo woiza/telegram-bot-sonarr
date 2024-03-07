@@ -164,10 +164,10 @@ func (b *Bot) HandleUpdate(update tgbotapi.Update) {
 			if !b.libraryFiltered(update) {
 				return
 			}
-		// case LibrarySeriesEditCommand:
-		// 	if !b.libraryMovieEdit(update) {
-		// 		return
-		// 	}
+		case LibrarySeriesEditCommand:
+			if !b.librarySeriesEdit(update) {
+				return
+			}
 		default:
 			b.clearState(update)
 			msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, CommandsClearedMessage)

@@ -156,14 +156,14 @@ func (b *Bot) HandleUpdate(update tgbotapi.Update) {
 			if !b.deleteSeries(update) {
 				return
 			}
-		// case LibraryMenuCommand:
-		// 	if !b.libraryMenu(update) {
-		// 		return
-		// 	}
-		// case LibraryFilteredCommand:
-		// 	if !b.libraryFiltered(update) {
-		// 		return
-		// 	}
+		case LibraryMenuCommand:
+			if !b.libraryMenu(update) {
+				return
+			}
+		case LibraryFilteredCommand:
+			if !b.libraryFiltered(update) {
+				return
+			}
 		// case LibrarySeriesEditCommand:
 		// 	if !b.libraryMovieEdit(update) {
 		// 		return
@@ -318,42 +318,6 @@ func (b *Bot) sendMessageWithEditAndKeyboard(command Command, keyboard tgbotapi.
 	if err != nil {
 		log.Printf("Error editing message with keyboard: %v", err)
 	}
-}
-
-func (b *Bot) createKeyboard(buttonText, buttonData []string) tgbotapi.InlineKeyboardMarkup {
-	buttons := make([][]tgbotapi.InlineKeyboardButton, len(buttonData))
-	for i := range buttonData {
-		buttons[i] = tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(buttonText[i], buttonData[i]))
-	}
-	return tgbotapi.NewInlineKeyboardMarkup(buttons...)
-}
-
-func findTagByID(tags []*starr.Tag, tagID int) *starr.Tag {
-	for _, tag := range tags {
-		if int(tag.ID) == tagID {
-			return tag
-		}
-	}
-	return nil
-}
-
-func isSelectedTag(selectedTags []int, tagID int) bool {
-	for _, selectedTag := range selectedTags {
-		if selectedTag == tagID {
-			return true
-		}
-	}
-	return false
-}
-
-func removeTag(tags []int, tagID int) []int {
-	var updatedTags []int
-	for _, tag := range tags {
-		if tag != tagID {
-			updatedTags = append(updatedTags, tag)
-		}
-	}
-	return updatedTags
 }
 
 func prettyPrint(i interface{}) string {

@@ -3,9 +3,11 @@ package bot
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"golift.io/starr"
 	"golift.io/starr/sonarr"
 )
 
@@ -46,51 +48,51 @@ func (b *Bot) sendUpcoming(episodes []*sonarr.Episode, msg *tgbotapi.MessageConf
 	}
 }
 
-// func (b *Bot) getSeriesAsInlineKeyboard(series []*sonarr.Series) [][]tgbotapi.InlineKeyboardButton {
-// 	var inlineKeyboard [][]tgbotapi.InlineKeyboardButton
-// 	for _, series := range series {
-// 		button := tgbotapi.NewInlineKeyboardButtonData(
-// 			fmt.Sprintf("%v - %v", series.Title, series.Year),
-// 			"TVDBID_"+strconv.Itoa(int(series.TvdbID)),
-// 		)
-// 		row := []tgbotapi.InlineKeyboardButton{button}
-// 		inlineKeyboard = append(inlineKeyboard, row)
-// 	}
-// 	return inlineKeyboard
-// }
+func (b *Bot) getSeriesAsInlineKeyboard(series []*sonarr.Series) [][]tgbotapi.InlineKeyboardButton {
+	var inlineKeyboard [][]tgbotapi.InlineKeyboardButton
+	for _, series := range series {
+		button := tgbotapi.NewInlineKeyboardButtonData(
+			fmt.Sprintf("%v - %v", series.Title, series.Year),
+			"TVDBID_"+strconv.Itoa(int(series.TvdbID)),
+		)
+		row := []tgbotapi.InlineKeyboardButton{button}
+		inlineKeyboard = append(inlineKeyboard, row)
+	}
+	return inlineKeyboard
+}
 
-// func (b *Bot) createKeyboard(buttonText, buttonData []string) tgbotapi.InlineKeyboardMarkup {
-// 	buttons := make([][]tgbotapi.InlineKeyboardButton, len(buttonData))
-// 	for i := range buttonData {
-// 		buttons[i] = tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(buttonText[i], buttonData[i]))
-// 	}
-// 	return tgbotapi.NewInlineKeyboardMarkup(buttons...)
-// }
+func (b *Bot) createKeyboard(buttonText, buttonData []string) tgbotapi.InlineKeyboardMarkup {
+	buttons := make([][]tgbotapi.InlineKeyboardButton, len(buttonData))
+	for i := range buttonData {
+		buttons[i] = tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(buttonText[i], buttonData[i]))
+	}
+	return tgbotapi.NewInlineKeyboardMarkup(buttons...)
+}
 
-// func findTagByID(tags []*starr.Tag, tagID int) *starr.Tag {
-// 	for _, tag := range tags {
-// 		if int(tag.ID) == tagID {
-// 			return tag
-// 		}
-// 	}
-// 	return nil
-// }
+func findTagByID(tags []*starr.Tag, tagID int) *starr.Tag {
+	for _, tag := range tags {
+		if int(tag.ID) == tagID {
+			return tag
+		}
+	}
+	return nil
+}
 
-// func isSelectedTag(selectedTags []int, tagID int) bool {
-// 	for _, selectedTag := range selectedTags {
-// 		if selectedTag == tagID {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
+func isSelectedTag(selectedTags []int, tagID int) bool {
+	for _, selectedTag := range selectedTags {
+		if selectedTag == tagID {
+			return true
+		}
+	}
+	return false
+}
 
-// func removeTag(tags []int, tagID int) []int {
-// 	var updatedTags []int
-// 	for _, tag := range tags {
-// 		if tag != tagID {
-// 			updatedTags = append(updatedTags, tag)
-// 		}
-// 	}
-// 	return updatedTags
-// }
+func removeTag(tags []int, tagID int) []int {
+	var updatedTags []int
+	for _, tag := range tags {
+		if tag != tagID {
+			updatedTags = append(updatedTags, tag)
+		}
+	}
+	return updatedTags
+}

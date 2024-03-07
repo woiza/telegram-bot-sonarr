@@ -28,7 +28,7 @@ func (b *Bot) handleCommand(update tgbotapi.Update, s *sonarr.Sonarr) {
 
 	case "series", "library", "l":
 		b.setActiveCommand(userID, LibraryMenuCommand)
-		//b.processLibraryCommand(update, userID, s)
+		b.processLibraryCommand(update, userID, s)
 
 	case "delete", "remove", "Delete", "Remove", "d":
 		b.setActiveCommand(userID, DeleteSeriesCommand)

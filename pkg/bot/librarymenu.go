@@ -284,7 +284,7 @@ func (b *Bot) showLibraryMenuFiltered(command *userLibrary) bool {
 	return false
 }
 
-func filterSeries(series []*sonarr.Series, filterCondition func(movie *sonarr.Series) bool) []*sonarr.Series {
+func filterSeries(series []*sonarr.Series, filterCondition func(series *sonarr.Series) bool) []*sonarr.Series {
 	var filtered []*sonarr.Series
 	for _, s := range series {
 		if filterCondition(s) {

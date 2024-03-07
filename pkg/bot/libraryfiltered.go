@@ -286,35 +286,3 @@ func (b *Bot) handleLibrarySeriesEdit(command *userLibrary) bool {
 	// go to librarymovieedit.to
 
 }
-
-func findQualityProfileByID(qualityProfiles []*sonarr.QualityProfile, qualityProfileID int64) *sonarr.QualityProfile {
-	for _, profile := range qualityProfiles {
-		if profile.ID == qualityProfileID {
-			return profile
-		}
-	}
-	return nil
-}
-
-func seriesToAddSeriesInput(series *sonarr.Series) *sonarr.AddSeriesInput {
-	return &sonarr.AddSeriesInput{
-		Monitored:         series.Monitored,
-		SeasonFolder:      series.SeasonFolder,
-		UseSceneNumbering: series.UseSceneNumbering,
-		ID:                series.ID,
-		LanguageProfileID: series.LanguageProfileID,
-		QualityProfileID:  series.QualityProfileID,
-		TvdbID:            series.TvdbID,
-		ImdbID:            series.ImdbID,
-		TvMazeID:          series.TvMazeID,
-		TvRageID:          series.TvRageID,
-		Path:              series.Path,
-		SeriesType:        series.SeriesType,
-		Title:             series.Title,
-		TitleSlug:         series.TitleSlug,
-		RootFolderPath:    series.RootFolderPath,
-		Tags:              series.Tags,
-		Seasons:           series.Seasons,
-		Images:            series.Images,
-	}
-}

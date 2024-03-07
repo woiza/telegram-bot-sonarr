@@ -12,11 +12,12 @@ import (
 )
 
 const (
-	LibrarySeriesDelete    = "LIBRARY_SERIES_DELETE"
-	LibrarySeriesDeleteYes = "LIBRARY_SERIES_DELETE_YES"
-	LibrarySeriesDeleteNo  = "LIBRARY_SERIES_DELETE_NO"
-	LibrarySeriesEdit      = "LIBRARY_SERIES_EDIT"
-	LibrarySeriesGoBack    = "LIBRARY_SERIES_GOBACK"
+	LibrarySeriesDelete     = "LIBRARY_SERIES_DELETE"
+	LibrarySeriesDeleteYes  = "LIBRARY_SERIES_DELETE_YES"
+	LibrarySeriesDeleteNo   = "LIBRARY_SERIES_DELETE_NO"
+	LibrarySeriesEdit       = "LIBRARY_SERIES_EDIT"
+	LibrarySeriesSeasonEdit = "LIBRARY_SERIES_SEASON_EDIT"
+	LibrarySeriesGoBack     = "LIBRARY_SERIES_GOBACK"
 	//LibraryFilteredGoBack        = "LIBRARY_FILTERED_GOBACK" already defined in librarymenu.go
 	LibrarySeriesMonitor          = "LIBRARY_SERIES_MONITOR"
 	LibrarySeriesUnmonitor        = "LIBRARY_SERIES_UNMONITOR"
@@ -86,6 +87,8 @@ func (b *Bot) libraryFiltered(update tgbotapi.Update) bool {
 		return b.showLibrarySeriesDetail(update, command)
 	case LibrarySeriesEdit:
 		return b.handleLibrarySeriesEdit(command)
+	case LibrarySeriesSeasonEdit:
+		return b.handleLibrarySeasonsEdit(command)
 	case LibrarySeriesMonitorSearchNow:
 		return b.handleLibrarySeriesMonitorSearchNow(update, command)
 	default:
@@ -153,13 +156,13 @@ func (b *Bot) showLibrarySeriesDetail(update tgbotapi.Update, command *userLibra
 	var keyboard tgbotapi.InlineKeyboardMarkup
 	if !series.Monitored {
 		keyboard = b.createKeyboard(
-			[]string{"Monitor Series", "Monitor Series & Search Now", "Delete Series", "Edit Series", "\U0001F519"},
-			[]string{LibrarySeriesMonitor, LibrarySeriesMonitorSearchNow, LibrarySeriesDelete, LibrarySeriesEdit, LibrarySeriesGoBack},
+			[]string{"Monitor Series", "Monitor Series & Search Now", "Delete Series", "Edit Series", "Edit Seasons", "\U0001F519"},
+			[]string{LibrarySeriesMonitor, LibrarySeriesMonitorSearchNow, LibrarySeriesDelete, LibrarySeriesEdit, LibrarySeriesSeasonEdit, LibrarySeriesGoBack},
 		)
 	} else {
 		keyboard = b.createKeyboard(
-			[]string{"Unmonitor Series", "Search Series", "Delete Series", "Edit Series", "\U0001F519"},
-			[]string{LibrarySeriesUnmonitor, LibrarySeriesSearch, LibrarySeriesDelete, LibrarySeriesEdit, LibrarySeriesGoBack},
+			[]string{"Unmonitor Series", "Search Series", "Delete Series", "Edit Series", "Edit Seasons", "\U0001F519"},
+			[]string{LibrarySeriesUnmonitor, LibrarySeriesSearch, LibrarySeriesDelete, LibrarySeriesEdit, LibrarySeriesSeasonEdit, LibrarySeriesGoBack},
 		)
 	}
 
@@ -281,4 +284,10 @@ func (b *Bot) handleLibrarySeriesEdit(command *userLibrary) bool {
 	b.setLibraryState(command.chatID, command)
 	b.setActiveCommand(command.chatID, LibrarySeriesEditCommand)
 	return b.showLibrarySeriesEdit(command)
+}
+
+func (b *Bot) handleLibrarySeasonsEdit(command *userLibrary) bool {
+	b.setLibraryState(command.chatID, command)
+	b.setActiveCommand(command.chatID, LibrarySeasonsEditCommand)
+	return b.showLibrarySeasons(command)
 }

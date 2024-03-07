@@ -15,13 +15,14 @@ import (
 )
 
 const (
-	AddSeriesCommand         = "ADDSERIES"
-	DeleteSeriesCommand      = "DELETESERIES"
-	LibraryMenuCommand       = "LIBRARYMENU"
-	LibraryFilteredCommand   = "LIBRARYFILTERED"
-	LibrarySeriesEditCommand = "LIBRARYSERIESEDIT"
-	CommandsClearedMessage   = "I am not sure what you mean.\nAll commands have been cleared"
-	CommandsCleared          = "All commands have been cleared"
+	AddSeriesCommand          = "ADDSERIES"
+	DeleteSeriesCommand       = "DELETESERIES"
+	LibraryMenuCommand        = "LIBRARYMENU"
+	LibraryFilteredCommand    = "LIBRARYFILTERED"
+	LibrarySeriesEditCommand  = "LIBRARYSERIESEDIT"
+	LibrarySeasonsEditCommand = "LIBRARYSEASONSEDIT"
+	CommandsClearedMessage    = "I am not sure what you mean.\nAll commands have been cleared"
+	CommandsCleared           = "All commands have been cleared"
 )
 
 type userAddSeries struct {
@@ -166,6 +167,10 @@ func (b *Bot) HandleUpdate(update tgbotapi.Update) {
 			}
 		case LibrarySeriesEditCommand:
 			if !b.librarySeriesEdit(update) {
+				return
+			}
+		case LibrarySeasonsEditCommand:
+			if !b.librarySeasonsEdit(update) {
 				return
 			}
 		default:

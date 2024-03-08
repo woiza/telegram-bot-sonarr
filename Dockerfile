@@ -10,8 +10,8 @@ RUN go mod download
 
 # Copy the source code. Note the slash at the end, as explained in
 # https://docs.docker.com/reference/dockerfile/#copy
-COPY ./cmd ./
-COPY ./pkg ./
+COPY ./cmd .
+COPY ./pkg .
 
 # Add the -ldflags '-w -s' flags to reduce the size of the binary
 RUN CGO_ENABLED=0 go build -a -ldflags '-w -s' -o /app/bot /source/cmd/bot/main.go

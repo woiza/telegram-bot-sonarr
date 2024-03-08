@@ -170,7 +170,7 @@ func (b *Bot) HandleUpdate(update tgbotapi.Update) {
 				return
 			}
 		case LibrarySeasonsEditCommand:
-			if !b.librarySeasonsEdit(update) {
+			if !b.librarySeasonEdit(update) {
 				return
 			}
 		default:

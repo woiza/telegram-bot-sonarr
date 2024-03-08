@@ -2,6 +2,7 @@ package bot
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -11,13 +12,13 @@ import (
 )
 
 const (
-	LibrarySeasonsEditToggleMonitor = "LIBRARY_SEASONS_EDIT_TOGGLE_MONITOR"
-	LibrarySeasonsEditSubmitChanges = "LIBRARY_SEASONS_EDIT_SUBMIT_CHANGES"
-	LibrarySeasonsEditGoBack        = "LIBRARY_SEASONS_EDIT_GOBACK"
-	LibrarySeasonsEditCancel        = "LIBRARY_SEASONS_EDIT_CANCEL"
+	LibrarySeasonEditToggleMonitor = "LIBRARY_SEASON_EDIT_TOGGLE_MONITOR"
+	LibrarySeasonEditSubmitChanges = "LIBRARY_SEASON_EDIT_SUBMIT_CHANGES"
+	LibrarySeasonEditGoBack        = "LIBRARY_SEASON_EDIT_GOBACK"
+	LibrarySeasonEditCancel        = "LIBRARY_SEASON_EDIT_CANCEL"
 )
 
-func (b *Bot) librarySeasonsEdit(update tgbotapi.Update) bool {
+func (b *Bot) librarySeasonEdit(update tgbotapi.Update) bool {
 	userID, err := b.getUserID(update)
 	if err != nil {
 		fmt.Printf("Cannot manage library: %v", err)
@@ -29,87 +30,60 @@ func (b *Bot) librarySeasonsEdit(update tgbotapi.Update) bool {
 		return false
 	}
 	switch update.CallbackQuery.Data {
-	case LibrarySeasonsEditToggleMonitor:
-		return b.handleLibrarySeasonsEditToggleMonitor(command)
-	case LibrarySeasonsEditSubmitChanges:
-		return b.handleLibrarySeasonsEditSubmitChanges(update, command)
-	case LibrarySeasonsEditGoBack:
+	case LibrarySeasonEditToggleMonitor:
+		return b.handleLibrarySeasonEditToggleMonitor(command)
+	case LibrarySeasonEditSubmitChanges:
+		return b.handleLibrarySeasonEditSubmitChanges(update, command)
+	case LibrarySeasonEditGoBack:
 		b.setActiveCommand(userID, LibraryFilteredActive)
 		b.setLibraryState(command.chatID, command)
 		return b.showLibrarySeriesDetail(update, command)
-	case LibrarySeasonsEditCancel:
+	case LibrarySeasonEditCancel:
 		b.clearState(update)
 		b.sendMessageWithEdit(command, CommandsCleared)
 		return false
 	default:
-		// Check if it starts with "TAG_"
+		// Check if it starts with "SEASON_"
 		if strings.HasPrefix(update.CallbackQuery.Data, "SEASON_") {
-			return b.handleLibrarySeasonsEditSelectTag(update, command)
+			return b.handleLibrarySeasonEditSelectSeason(update, command)
 		}
-		return b.showLibrarySeasons(command)
+		return b.showLibrarySeason(command)
 	}
 }
 
-func (b *Bot) showLibrarySeasons(command *userLibrary) bool {
+func (b *Bot) showLibrarySeason(command *userLibrary) bool {
 
+	// Sort series seasons in descending order
+	sort.Slice(command.series.Seasons, func(i, j int) bool {
+		return command.series.Seasons[i].SeasonNumber > command.series.Seasons[j].SeasonNumber
+	})
 	series := command.series
+	messageText := fmt.Sprintf("[%v](https://www.imdb.com/title/%v) \\- _%v_\n\n", utils.Escape(series.Title), series.ImdbID, series.Year)
 
-	var seasonsKeyboard [][]tgbotapi.InlineKeyboardButton
+	var seasonKeyboardButtons [][]tgbotapi.InlineKeyboardButton
 	for _, season := range command.series.Seasons {
-
 		row := []tgbotapi.InlineKeyboardButton{
 			tgbotapi.NewInlineKeyboardButtonData(strconv.Itoa(season.SeasonNumber), "SEASON_"+strconv.Itoa(int(season.SeasonNumber))),
 		}
-		seasonsKeyboard = append(seasonsKeyboard, row)
+		seasonKeyboardButtons = append(seasonKeyboardButtons, row)
 	}
 
-	// var monitorIcon string
-	// if command.selectedMonitoring {
-	// 	monitorIcon = MonitorIcon
-	// } else {
-	// 	monitorIcon = UnmonitorIcon
-	// }
+	keyboardMarkup := tgbotapi.InlineKeyboardMarkup{
+		InlineKeyboard: seasonKeyboardButtons,
+	}
 
-	messageText := fmt.Sprintf("[%v](https://www.imdb.com/title/%v) \\- _%v_\n\n", utils.Escape(series.Title), series.ImdbID, series.Year)
-
-	keyboard := b.createKeyboard(
-		[]string{"Monitored: "},
-		[]string{LibrarySeasonsEditToggleMonitor},
+	keyboardGoBack := b.createKeyboard(
+		[]string{"\U0001F519"},
+		[]string{LibrarySeasonEditGoBack},
 	)
 
-	// var tagsKeyboard [][]tgbotapi.InlineKeyboardButton
-	// for _, tag := range command.allTags {
-	// 	// Check if the tag is selected
-	// 	isSelected := isSelectedTag(command.selectedTags, tag.ID)
+	keyboardMarkup.InlineKeyboard = append(keyboardMarkup.InlineKeyboard, keyboardGoBack.InlineKeyboard...)
 
-	// 	var buttonText string
-	// 	if isSelected {
-	// 		buttonText = tag.Label + " \u2705"
-	// 	} else {
-	// 		buttonText = tag.Label
-	// 	}
-
-	// 	row := []tgbotapi.InlineKeyboardButton{
-	// 		tgbotapi.NewInlineKeyboardButtonData(buttonText, "TAG_"+strconv.Itoa(int(tag.ID))),
-	// 	}
-	// 	tagsKeyboard = append(tagsKeyboard, row)
-	// }
-
-	keyboard.InlineKeyboard = append(keyboard.InlineKeyboard, seasonsKeyboard...)
-
-	// keyboardSubmitCancelGoBack := b.createKeyboard(
-	// 	[]string{"Submit - Confirm Changes", "Cancel - clear command", "\U0001F519"},
-	// 	[]string{LibrarySeasonsEditSubmitChanges, LibrarySeasonsEditCancel, LibrarySeasonsEditGoBack},
-	// )
-
-	// keyboard.InlineKeyboard = append(keyboard.InlineKeyboard, keyboardSubmitCancelGoBack.InlineKeyboard...)
-
-	// Send the message containing season details along with the keyboard
 	editMsg := tgbotapi.NewEditMessageTextAndMarkup(
 		command.chatID,
 		command.messageID,
 		messageText,
-		keyboard,
+		keyboardMarkup,
 	)
 	editMsg.ParseMode = "MarkdownV2"
 	editMsg.DisableWebPagePreview = true
@@ -118,13 +92,13 @@ func (b *Bot) showLibrarySeasons(command *userLibrary) bool {
 	return false
 }
 
-func (b *Bot) handleLibrarySeasonsEditToggleMonitor(command *userLibrary) bool {
+func (b *Bot) handleLibrarySeasonEditToggleMonitor(command *userLibrary) bool {
 	command.selectedMonitoring = !command.selectedMonitoring
 	b.setLibraryState(command.chatID, command)
 	return b.showLibrarySeriesEdit(command)
 }
 
-func (b *Bot) handleLibrarySeasonsEditSelectTag(update tgbotapi.Update, command *userLibrary) bool {
+func (b *Bot) handleLibrarySeasonEditSelectSeason(update tgbotapi.Update, command *userLibrary) bool {
 	seasonNumberStr := strings.TrimPrefix(update.CallbackQuery.Data, "SEASON_")
 	print(seasonNumberStr)
 	// // Parse the tag ID
@@ -145,10 +119,10 @@ func (b *Bot) handleLibrarySeasonsEditSelectTag(update tgbotapi.Update, command 
 	// }
 
 	b.setLibraryState(command.chatID, command)
-	return b.showLibrarySeasons(command)
+	return b.showLibrarySeason(command)
 }
 
-func (b *Bot) handleLibrarySeasonsEditSubmitChanges(update tgbotapi.Update, command *userLibrary) bool {
+func (b *Bot) handleLibrarySeasonEditSubmitChanges(update tgbotapi.Update, command *userLibrary) bool {
 	command.series.Monitored = command.selectedMonitoring
 	command.series.QualityProfileID = command.selectedQualityProfile
 	command.series.Tags = command.selectedTags

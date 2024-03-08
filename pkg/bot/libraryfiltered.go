@@ -133,13 +133,6 @@ func (b *Bot) showLibrarySeriesDetail(update tgbotapi.Update, command *userLibra
 	}
 	tagsString := strings.Join(tagLabels, ", ")
 
-	// seriesFiles, err := b.SonarrServer.GetSeriesEpisodeFiles(series.ID)
-	// if err != nil {
-	// 	msg := tgbotapi.NewMessage(command.chatID, err.Error())
-	// 	b.sendMessage(msg)
-	// 	return false
-	// }
-
 	// Create a message with series details
 	var message strings.Builder
 	fmt.Fprintf(&message, "[%v](https://www.imdb.com/title/%v) \\- _%v_\n\n", utils.Escape(series.Title), series.ImdbID, series.Year)
@@ -289,5 +282,5 @@ func (b *Bot) handleLibrarySeriesEdit(command *userLibrary) bool {
 func (b *Bot) handleLibrarySeasonsEdit(command *userLibrary) bool {
 	b.setLibraryState(command.chatID, command)
 	b.setActiveCommand(command.chatID, LibrarySeasonsEditCommand)
-	return b.showLibrarySeasons(command)
+	return b.showLibrarySeason(command)
 }

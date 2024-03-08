@@ -1,0 +1,8 @@
+/test
+.vscode
+.git
+*.md
+Dockerfile
+# Go workspace file
+go.work
+.DS_Store

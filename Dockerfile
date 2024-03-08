@@ -4,16 +4,13 @@ FROM golang AS builder
 WORKDIR /source
 
 # copy Go modules and dependencies to image
-COPY ./cmd .
-COPY ./pkg .
-COPY ./go.mod .
-COPY ./go.sum .
+COPY . .
 
 # download Go modules and dependencies
 RUN go mod download
 
-# compile application
-RUN CGO_ENABLED=0 go build -a -o /app/bot /source/cmd/bot/main.go
+# Add the -ldflags '-w -s' flags to reduce the size of the binary
+RUN CGO_ENABLED=0 go build -a -ldflags '-w -s' -o /app/bot /source/cmd/bot/main.go
 
 # Now copy it into a base image.
 FROM alpine

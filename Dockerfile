@@ -1,16 +1,20 @@
 FROM golang AS builder
 
-# create a working directory inside the image
+# Set destination for COPY
 WORKDIR /source
 
-# copy Go modules and dependencies to image
-COPY . .
-
-# download Go modules and dependencies
+# Download Go modules
+COPY go.mod ./
+COPY go.sum ./
 RUN go mod download
 
+# Copy the source code. Note the slash at the end, as explained in
+# https://docs.docker.com/reference/dockerfile/#copy
+COPY ./cmd ./
+COPY ./pkg ./
+
 # Add the -ldflags '-w -s' flags to reduce the size of the binary
-RUN CGO_ENABLED=0 go build -a -ldflags '-w -s' -o /app/bot /source/cmd/bot/main.go
+RUN CGO_ENABLED=0 go build -a -ldflags '-w -s' -o /app/bot /source/main.go
 
 # Now copy it into a base image.
 FROM alpine

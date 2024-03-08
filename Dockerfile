@@ -12,8 +12,8 @@ COPY ./go.sum .
 # download Go modules and dependencies
 RUN go mod download
 
-# Compile app, add the -ldflags '-w -s' flags to reduce the size of the binary
-RUN CGO_ENABLED=0 go build -a -ldflags '-w -s' -o /app/bot /source/cmd/bot/main.go
+# compile application
+RUN CGO_ENABLED=0 go build -a -o /app/bot /source/cmd/bot/main.go
 
 # Now copy it into a base image.
 FROM alpine

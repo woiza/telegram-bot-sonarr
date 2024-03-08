@@ -1,17 +1,15 @@
 FROM golang AS builder
 
-# Set destination for COPY
+# Set the working directory inside the Docker image
 WORKDIR /source
 
-# Download Go modules
-COPY go.mod .
-COPY go.sum .
-RUN go mod download
+# Copy the 'cmd' and 'pkg' directories and the Go module files into the Docker image
+COPY ./cmd ./cmd
+COPY ./pkg ./pkg
+COPY go.mod go.sum ./
 
-# Copy the source code. Note the slash at the end, as explained in
-# https://docs.docker.com/reference/dockerfile/#copy
-COPY ./cmd .
-COPY ./pkg .
+# Download the Go modules
+RUN go mod download
 
 # Add the -ldflags '-w -s' flags to reduce the size of the binary
 RUN CGO_ENABLED=0 go build -a -ldflags '-w -s' -o /app/bot /source/cmd/bot/main.go

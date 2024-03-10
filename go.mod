@@ -7,4 +7,6 @@ require (
 	golift.io/starr v1.0.0
 )
 
-require golang.org/x/net v0.17.0 // indirect
+require golang.org/x/net v0.22.0 // indirect
+
+replace golift.io/starr => ../starr

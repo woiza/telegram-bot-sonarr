@@ -42,7 +42,7 @@ func (b *Bot) processAddCommand(update tgbotapi.Update, userID int64, s *sonarr.
 		b.sendMessageWithEdit(&command, "Please provide a search criteria /q [query]")
 		return
 	}
-	searchResults, err := s.Lookup(criteria)
+	searchResults, err := s.Lookup("\"" + criteria + "\"")
 	if err != nil {
 		msg := tgbotapi.NewMessage(userID, err.Error())
 		b.sendMessage(msg)
@@ -561,6 +561,7 @@ func (b *Bot) handleAddSeries(update tgbotapi.Update, command *userAddSeries) bo
 	command.addSeriesOptions = &sonarr.AddSeriesOptions{
 		SearchForMissingEpisodes:     *starr.False(),
 		SearchForCutoffUnmetEpisodes: *starr.False(),
+		Monitor:                      command.monitor,
 	}
 	b.setAddSeriesState(command.chatID, command)
 	return b.addSeriesToLibrary(update, command)
@@ -570,6 +571,7 @@ func (b *Bot) handleAddSeriesMissing(update tgbotapi.Update, command *userAddSer
 	command.addSeriesOptions = &sonarr.AddSeriesOptions{
 		SearchForMissingEpisodes:     *starr.True(),
 		SearchForCutoffUnmetEpisodes: *starr.False(),
+		Monitor:                      command.monitor,
 	}
 	b.setAddSeriesState(command.chatID, command)
 	return b.addSeriesToLibrary(update, command)
@@ -579,6 +581,7 @@ func (b *Bot) handleAddSeriesMissingCutoff(update tgbotapi.Update, command *user
 	command.addSeriesOptions = &sonarr.AddSeriesOptions{
 		SearchForMissingEpisodes:     *starr.True(),
 		SearchForCutoffUnmetEpisodes: *starr.True(),
+		Monitor:                      command.monitor,
 	}
 	b.setAddSeriesState(command.chatID, command)
 	return b.addSeriesToLibrary(update, command)
@@ -588,6 +591,7 @@ func (b *Bot) handleAddSeriesCutOff(update tgbotapi.Update, command *userAddSeri
 	command.addSeriesOptions = &sonarr.AddSeriesOptions{
 		SearchForMissingEpisodes:     *starr.False(),
 		SearchForCutoffUnmetEpisodes: *starr.True(),
+		Monitor:                      command.monitor,
 	}
 	b.setAddSeriesState(command.chatID, command)
 	return b.addSeriesToLibrary(update, command)

@@ -74,7 +74,7 @@ func (b *Bot) processLibraryCommand(update tgbotapi.Update, userID int64, s *son
 		return
 	}
 
-	searchResults, err := s.Lookup(criteria)
+	searchResults, err := s.Lookup("\"" + criteria + "\"")
 	if err != nil {
 		msg := tgbotapi.NewMessage(userID, err.Error())
 		b.sendMessage(msg)

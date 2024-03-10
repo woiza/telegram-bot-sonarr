@@ -188,6 +188,7 @@ func (b *Bot) HandleUpdate(update tgbotapi.Update) {
 
 	// If no command was passed, handle a search command.
 	if update.Message.Entities == nil {
+		//update.Message.Text = fmt.Sprintf("/q \"%s\"", update.Message.Text)
 		update.Message.Text = fmt.Sprintf("/q %s", update.Message.Text)
 		update.Message.Entities = []tgbotapi.MessageEntity{{
 			Type:   "bot_command",

@@ -58,7 +58,8 @@ func (b *Bot) processDeleteCommand(update tgbotapi.Update, userID int64, s *sona
 		return
 	}
 
-	searchResults, err := s.Lookup(criteria)
+	//update.Message.Text = fmt.Sprintf("/q \"%s\"", update.Message.Text)
+	searchResults, err := s.Lookup("\"" + criteria + "\"")
 	if err != nil {
 		msg := tgbotapi.NewMessage(userID, err.Error())
 		b.sendMessage(msg)

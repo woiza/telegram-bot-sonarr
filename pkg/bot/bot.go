@@ -61,6 +61,8 @@ type userLibrary struct {
 	selectedTags           []int
 	selectedMonitoring     bool
 	series                 *sonarr.Series
+	seasonEpisodes         []*sonarr.Episode
+	episodeFiles           []*sonarr.EpisodeFile
 	seriesSeasons          map[int]*sonarr.Season
 	selectedSeason         int
 	lastSeriesSearch       time.Time
@@ -188,7 +190,6 @@ func (b *Bot) HandleUpdate(update tgbotapi.Update) {
 
 	// If no command was passed, handle a search command.
 	if update.Message.Entities == nil {
-		//update.Message.Text = fmt.Sprintf("/q \"%s\"", update.Message.Text)
 		update.Message.Text = fmt.Sprintf("/q %s", update.Message.Text)
 		update.Message.Entities = []tgbotapi.MessageEntity{{
 			Type:   "bot_command",

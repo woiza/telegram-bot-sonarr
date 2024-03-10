@@ -135,6 +135,21 @@ func (b *Bot) showLibrarySeriesDetail(update tgbotapi.Update, command *userLibra
 		lastSearchString = command.lastSeriesSearch.Format("02 Jan 06 - 15:04") // Convert non-zero time to string
 	}
 
+	// get all episodeFiles
+	episodeFiles, err := b.SonarrServer.GetSeriesEpisodeFiles(series.ID)
+	if err != nil {
+		msg := tgbotapi.NewMessage(command.chatID, err.Error())
+		b.sendMessage(msg)
+		return false
+	}
+	command.episodeFiles = episodeFiles
+
+	// iterate over episodes and get their size
+	var totalSize int64
+	for _, file := range episodeFiles {
+		totalSize += file.Size
+	}
+
 	var tagLabels []string
 	for _, tagID := range series.Tags {
 		tag := findTagByID(command.allTags, tagID)
@@ -149,10 +164,9 @@ func (b *Bot) showLibrarySeriesDetail(update tgbotapi.Update, command *userLibra
 	fmt.Fprintf(&message, "Monitored: %s\n", monitorIcon)
 	fmt.Fprintf(&message, "Status: %s\n", utils.Escape(series.Status))
 	fmt.Fprintf(&message, "Last Manual Search: %s\n", utils.Escape(lastSearchString))
-	fmt.Fprintf(&message, "Size: %d GB\n", series.Statistics.SizeOnDisk/(1024*1024*1024))
+	fmt.Fprintf(&message, "Size: %d GB\n", totalSize/(1024*1024*1024))
 	fmt.Fprintf(&message, "Tags: %s\n", utils.Escape(tagsString))
 	fmt.Fprintf(&message, "Quality Profile: %s\n", utils.Escape(getQualityProfileByID(command.qualityProfiles, series.QualityProfileID).Name))
-	//fmt.Fprintf(&message, "Custom Format Score: %s\n", utils.Escape(customFormatScore))
 
 	messageText := message.String()
 

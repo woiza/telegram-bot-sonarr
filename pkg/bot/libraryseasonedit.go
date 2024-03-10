@@ -148,14 +148,38 @@ func (b *Bot) showLibrarySeriesSeasonDetail(command *userLibrary) bool {
 		lastSearchString = command.lastSeasonSearch.Format("02 Jan 06 - 15:04") // Convert non-zero time to string
 	}
 
+	seasonEpisodes, err := b.SonarrServer.GetSeriesEpisodes(
+		&sonarr.GetEpisode{
+			SeriesID:     series.ID,
+			SeasonNumber: season.SeasonNumber})
+	if err != nil {
+		msg := tgbotapi.NewMessage(command.chatID, err.Error())
+		b.sendMessage(msg)
+		return false
+	}
+	command.seasonEpisodes = seasonEpisodes
+
+	//get all episodefils of a season
+	var episodeFiles []*sonarr.EpisodeFile
+	for _, episodeFile := range command.episodeFiles {
+		if episodeFile.SeasonNumber == season.SeasonNumber {
+			episodeFiles = append(episodeFiles, episodeFile)
+		}
+	}
+	// iterate over episodes and get their size
+	var totalSize int64
+	for _, file := range episodeFiles {
+		totalSize += file.Size
+	}
+
 	// Create a message with season details
 	var message strings.Builder
 	fmt.Fprintf(&message, "[%v](https://www.imdb.com/title/%v) \\- _%v_\\- season _%v_\n\n", utils.Escape(series.Title), series.ImdbID, series.Year, season.SeasonNumber)
 	fmt.Fprintf(&message, "Monitored: %s\n", monitorIcon)
 	fmt.Fprintf(&message, "Last Manual Search: %s\n", utils.Escape(lastSearchString))
-	// statistics missing/broken
-	//fmt.Fprintf(&message, "Episodes: %s\n", strconv.Itoa(season.Statistics.TotalEpisodeCount))
-	//fmt.Fprintf(&message, "Size: %d GB\n", season.Statistics.SizeOnDisk/(1024*1024*1024))
+	fmt.Fprintf(&message, "Episodes: %d\n", len(seasonEpisodes))
+	fmt.Fprintf(&message, "Episodes on Disk: %d\n", len(episodeFiles))
+	fmt.Fprintf(&message, "Size: %d GB\n", totalSize/(1024*1024*1024))
 
 	messageText := message.String()
 
@@ -207,6 +231,19 @@ func (b *Bot) handleLibrarySeriesSeasonMonitor(command *userLibrary) bool {
 		return false
 	}
 
+	// Monitor al episodes of the season
+	var episodeIDs []int64
+	for _, episode := range command.seasonEpisodes {
+		episodeIDs = append(episodeIDs, episode.ID)
+	}
+
+	_, err = b.SonarrServer.MonitorEpisode(episodeIDs, *starr.True())
+	if err != nil {
+		msg := tgbotapi.NewMessage(command.chatID, err.Error())
+		b.sendMessage(msg)
+		return false
+	}
+
 	b.setLibraryState(command.chatID, command)
 	return b.showLibrarySeriesSeasonDetail(command)
 }
@@ -227,6 +264,20 @@ func (b *Bot) handleLibrarySeriesSeasonUnmonitor(command *userLibrary) bool {
 
 	// Update the series on the server
 	_, err := b.SonarrServer.UpdateSeries(input, *starr.False())
+	if err != nil {
+		msg := tgbotapi.NewMessage(command.chatID, err.Error())
+		b.sendMessage(msg)
+		return false
+	}
+
+	// Unmonitor al episodes of the season
+	var episodeIDs []int64
+	for _, episode := range command.seasonEpisodes {
+		episodeIDs = append(episodeIDs, episode.ID)
+	}
+
+	// does not work
+	_, err = b.SonarrServer.MonitorEpisode(episodeIDs, *starr.False())
 	if err != nil {
 		msg := tgbotapi.NewMessage(command.chatID, err.Error())
 		b.sendMessage(msg)

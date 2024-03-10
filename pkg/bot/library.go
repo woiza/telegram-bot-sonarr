@@ -115,6 +115,15 @@ func getQualityProfileIndexByID(qualityProfiles []*sonarr.QualityProfile, qualit
 	return -1 // Return an appropriate default or handle the error as needed
 }
 
+func getSeasonByNumber(series *sonarr.Series, number int) *sonarr.Season {
+	for i := range series.Seasons {
+		if series.Seasons[i].SeasonNumber == number {
+			return series.Seasons[i]
+		}
+	}
+	return nil
+}
+
 func seriesToAddSeriesInput(series *sonarr.Series) *sonarr.AddSeriesInput {
 	return &sonarr.AddSeriesInput{
 		Monitored:         series.Monitored,

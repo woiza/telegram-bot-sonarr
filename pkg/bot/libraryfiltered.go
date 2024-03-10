@@ -107,6 +107,16 @@ func (b *Bot) showLibrarySeriesDetail(update tgbotapi.Update, command *userLibra
 		series = command.series
 	}
 
+	command.seriesSeasons = make(map[int]*sonarr.Season, len(command.series.Seasons))
+	for _, season := range command.series.Seasons {
+		number := season.SeasonNumber
+		command.seriesSeasons[number] = season
+		// statistics missing/broken
+		// 	fmt.Printf("Season number: %+v\n", season.SeasonNumber)
+		// 	fmt.Printf("Season monitored: %+v\n", season.Monitored)
+		// 	fmt.Printf("Season statistics: %+v\n", season.Statistics)
+	}
+
 	command.selectedMonitoring = series.Monitored
 	command.selectedTags = series.Tags
 	command.selectedQualityProfile = series.QualityProfileID
@@ -119,10 +129,10 @@ func (b *Bot) showLibrarySeriesDetail(update tgbotapi.Update, command *userLibra
 	}
 
 	var lastSearchString string
-	if command.lastSearch.IsZero() {
+	if command.lastSeriesSearch.IsZero() {
 		lastSearchString = "" // Set empty string if the time is the zero value
 	} else {
-		lastSearchString = command.lastSearch.Format("02 Jan 06 - 15:04") // Convert non-zero time to string
+		lastSearchString = command.lastSeriesSearch.Format("02 Jan 06 - 15:04") // Convert non-zero time to string
 	}
 
 	var tagLabels []string
@@ -210,7 +220,7 @@ func (b *Bot) handleLibrarySeriesSearch(update tgbotapi.Update, command *userLib
 		b.sendMessage(msg)
 		return false
 	}
-	command.lastSearch = time.Now()
+	command.lastSeriesSearch = time.Now()
 	b.setLibraryState(command.chatID, command)
 	return b.showLibrarySeriesDetail(update, command)
 }
@@ -235,7 +245,7 @@ func (b *Bot) handleLibrarySeriesMonitorSearchNow(update tgbotapi.Update, comman
 		b.sendMessage(msg)
 		return false
 	}
-	command.lastSearch = time.Now()
+	command.lastSeriesSearch = time.Now()
 	b.setLibraryState(command.chatID, command)
 	return b.showLibrarySeriesDetail(update, command)
 }

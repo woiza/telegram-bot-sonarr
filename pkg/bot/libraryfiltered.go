@@ -113,6 +113,7 @@ func (b *Bot) showLibrarySeriesDetail(update tgbotapi.Update, command *userLibra
 		command.seriesSeasons[number] = season
 	}
 
+	command.lastSeasonSearch = make(map[int]time.Time, len(command.series.Seasons))
 	command.selectedMonitoring = series.Monitored
 	command.selectedTags = series.Tags
 	command.selectedQualityProfile = series.QualityProfileID

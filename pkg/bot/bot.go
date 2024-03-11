@@ -61,13 +61,12 @@ type userLibrary struct {
 	selectedTags           []int
 	selectedMonitoring     bool
 	series                 *sonarr.Series
-	seasonEpisodes         []*sonarr.Episode
 	allEpisodes            []*sonarr.Episode
 	allEpisodeFiles        []*sonarr.EpisodeFile
 	seriesSeasons          map[int]*sonarr.Season
 	selectedSeason         *sonarr.Season
 	lastSeriesSearch       time.Time
-	lastSeasonSearch       time.Time
+	lastSeasonSearch       map[int]time.Time
 	chatID                 int64
 	messageID              int
 	page                   int

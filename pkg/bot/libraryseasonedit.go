@@ -71,9 +71,9 @@ func (b *Bot) librarySeasonEdit(update tgbotapi.Update) bool {
 }
 
 func (b *Bot) showLibrarySeason(command *userLibrary) bool {
-	// Sort series seasons in descending order
+	// Sort series seasons in ascending order
 	sort.Slice(command.series.Seasons, func(i, j int) bool {
-		return command.series.Seasons[i].SeasonNumber > command.series.Seasons[j].SeasonNumber
+		return command.series.Seasons[i].SeasonNumber < command.series.Seasons[j].SeasonNumber
 	})
 	series := command.series
 	messageText := fmt.Sprintf("[%v](https://www.imdb.com/title/%v) \\- _%v_\n\n", utils.Escape(series.Title), series.ImdbID, series.Year)
@@ -147,28 +147,32 @@ func (b *Bot) showLibrarySeriesSeasonDetail(command *userLibrary) bool {
 	}
 
 	var lastSearchString string
-	if command.lastSeasonSearch.IsZero() {
+	if command.lastSeasonSearch[season.SeasonNumber].IsZero() {
 		lastSearchString = "" // Set empty string if the time is the zero value
 	} else {
-		lastSearchString = command.lastSeasonSearch.Format("02 Jan 06 - 15:04") // Convert non-zero time to string
+		lastSearchString = command.lastSeasonSearch[season.SeasonNumber].Format("02 Jan 06 - 15:04") // Convert non-zero time to string
 	}
 
-	//get all episodes of a season
-	var seasonEpisodes []*sonarr.Episode
+	var seasonEpisodesCounter int
 	for _, episode := range command.allEpisodes {
 		if episode.SeasonNumber == season.SeasonNumber {
-			seasonEpisodes = append(seasonEpisodes, episode)
-
+			seasonEpisodesCounter++
 		}
 	}
 
-	// iterate over episodes and get their amount and size
-	var episodeFilesCounter int
+	seariesEpisodeFiles, err := b.SonarrServer.GetSeriesEpisodeFiles(command.series.ID)
+	if err != nil {
+		msg := tgbotapi.NewMessage(command.chatID, err.Error())
+		b.sendMessage(msg)
+		return false
+	}
+
+	var seasonEpisodeFiles []*sonarr.EpisodeFile
 	var totalSize int64
-	for _, file := range command.allEpisodeFiles {
+	for _, file := range seariesEpisodeFiles {
 		if file.SeasonNumber == season.SeasonNumber {
-			episodeFilesCounter++
 			totalSize += file.Size
+			seasonEpisodeFiles = append(seasonEpisodeFiles, file)
 		}
 	}
 
@@ -181,22 +185,33 @@ func (b *Bot) showLibrarySeriesSeasonDetail(command *userLibrary) bool {
 	}
 	fmt.Fprintf(&message, "Monitored: %s\n", monitorIcon)
 	fmt.Fprintf(&message, "Last Manual Search: %s\n", utils.Escape(lastSearchString))
-	fmt.Fprintf(&message, "Episodes: %d\n", len(seasonEpisodes))
-	fmt.Fprintf(&message, "Episodes on Disk: %d\n", episodeFilesCounter)
+	fmt.Fprintf(&message, "Episodes: %d\n", seasonEpisodesCounter)
+	fmt.Fprintf(&message, "Episodes on Disk: %d\n", len(seasonEpisodeFiles))
 	fmt.Fprintf(&message, "Size: %d GB\n", totalSize/(1024*1024*1024))
 
 	messageText := message.String()
 
 	var keyboard tgbotapi.InlineKeyboardMarkup
-	if !season.Monitored {
+
+	if season.Monitored && len(seasonEpisodeFiles) == 0 {
+		keyboard = b.createKeyboard(
+			[]string{"Search Season", "Unmonitor Season", "\U0001F519"},
+			[]string{LibrarySeasonSearch, LibrarySeasonUnmonitor, LibrarySeasonGoBack},
+		)
+	} else if season.Monitored && len(seasonEpisodeFiles) > 0 {
+		keyboard = b.createKeyboard(
+			[]string{"Search Season", "Unmonitor Season", "Delete Season & unmonitor", "\U0001F519"},
+			[]string{LibrarySeasonSearch, LibrarySeasonUnmonitor, LibrarySeasonDelete, LibrarySeasonGoBack},
+		)
+	} else if !season.Monitored && len(seasonEpisodeFiles) == 0 {
+		keyboard = b.createKeyboard(
+			[]string{"Monitor Season", "Monitor Season & Search Now", "\U0001F519"},
+			[]string{LibrarySeasonMonitor, LibrarySeasonMonitorSearchNow, LibrarySeasonGoBack},
+		)
+	} else if !season.Monitored && len(seasonEpisodeFiles) > 0 {
 		keyboard = b.createKeyboard(
 			[]string{"Monitor Season", "Monitor Season & Search Now", "Delete Season & unmonitor", "\U0001F519"},
 			[]string{LibrarySeasonMonitor, LibrarySeasonMonitorSearchNow, LibrarySeasonDelete, LibrarySeasonGoBack},
-		)
-	} else {
-		keyboard = b.createKeyboard(
-			[]string{"Unmonitor Season", "Search Season", "Delete Season & unmonitor", "\U0001F519"},
-			[]string{LibrarySeasonUnmonitor, LibrarySeasonSearch, LibrarySeasonDelete, LibrarySeasonGoBack},
 		)
 	}
 	// // Send the message containing series details along with the keyboard
@@ -263,7 +278,7 @@ func (b *Bot) handleLibrarySeriesSeasonSearch(command *userLibrary) bool {
 		b.sendMessage(msg)
 		return false
 	}
-	command.lastSeasonSearch = time.Now()
+	command.lastSeasonSearch[command.selectedSeason.SeasonNumber] = time.Now()
 	b.setLibraryState(command.chatID, command)
 	return b.showLibrarySeriesSeasonDetail(command)
 }
@@ -290,7 +305,7 @@ func (b *Bot) handleLibrarySeriesSeasonMonitorSearchNow(command *userLibrary) bo
 		b.sendMessage(msg)
 		return false
 	}
-	command.lastSeasonSearch = time.Now()
+	command.lastSeasonSearch[command.selectedSeason.SeasonNumber] = time.Now()
 	b.setLibraryState(command.chatID, command)
 	return b.showLibrarySeriesSeasonDetail(command)
 }

@@ -65,7 +65,7 @@ type userLibrary struct {
 	allEpisodes            []*sonarr.Episode
 	allEpisodeFiles        []*sonarr.EpisodeFile
 	seriesSeasons          map[int]*sonarr.Season
-	selectedSeason         int
+	selectedSeason         *sonarr.Season
 	lastSeriesSearch       time.Time
 	lastSeasonSearch       time.Time
 	chatID                 int64

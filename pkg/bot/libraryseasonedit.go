@@ -60,7 +60,7 @@ func (b *Bot) librarySeasonEdit(update tgbotapi.Update) bool {
 	case LibrarySeasonMonitorSearchNow:
 		return b.handleLibrarySeriesSeasonMonitorSearchNow(command)
 	case LibrarySeasonDelete:
-		return b.handleLibrarySeasonDeleteSeason(command)
+		return b.handleLibrarySeasonDeleteSeasonUnmonitor(command)
 	default:
 		// Check if it starts with "SEASON_"
 		if strings.HasPrefix(update.CallbackQuery.Data, "SEASON_") {
@@ -129,7 +129,7 @@ func (b *Bot) handleLibrarySeasonEditSelectSeason(update tgbotapi.Update, comman
 		log.Println("Failed to convert season number to integer:", err)
 		return false
 	}
-	command.selectedSeason = seasonNumber
+	command.selectedSeason = getSeasonByNumber(command.series, seasonNumber)
 
 	b.setLibraryState(command.chatID, command)
 	return b.showLibrarySeriesSeasonDetail(command)
@@ -137,7 +137,7 @@ func (b *Bot) handleLibrarySeasonEditSelectSeason(update tgbotapi.Update, comman
 
 func (b *Bot) showLibrarySeriesSeasonDetail(command *userLibrary) bool {
 	series := command.series
-	season := command.seriesSeasons[command.selectedSeason]
+	season := command.seriesSeasons[command.selectedSeason.SeasonNumber]
 
 	var monitorIcon string
 	if season.Monitored {
@@ -190,12 +190,12 @@ func (b *Bot) showLibrarySeriesSeasonDetail(command *userLibrary) bool {
 	var keyboard tgbotapi.InlineKeyboardMarkup
 	if !season.Monitored {
 		keyboard = b.createKeyboard(
-			[]string{"Monitor Season", "Monitor Season & Search Now", "Delete Season", "\U0001F519"},
+			[]string{"Monitor Season", "Monitor Season & Search Now", "Delete Season & unmonitor", "\U0001F519"},
 			[]string{LibrarySeasonMonitor, LibrarySeasonMonitorSearchNow, LibrarySeasonDelete, LibrarySeasonGoBack},
 		)
 	} else {
 		keyboard = b.createKeyboard(
-			[]string{"Unmonitor Season", "Search Season", "Delete Season", "\U0001F519"},
+			[]string{"Unmonitor Season", "Search Season", "Delete Season & unmonitor", "\U0001F519"},
 			[]string{LibrarySeasonUnmonitor, LibrarySeasonSearch, LibrarySeasonDelete, LibrarySeasonGoBack},
 		)
 	}
@@ -214,16 +214,8 @@ func (b *Bot) showLibrarySeriesSeasonDetail(command *userLibrary) bool {
 }
 
 func (b *Bot) handleLibrarySeriesSeasonMonitor(command *userLibrary) bool {
-	// Access the specific season
-	season := getSeasonByNumber(command.series, command.selectedSeason)
-	if season == nil {
-		log.Println("Invalid season number:", command.selectedSeason)
-		return false
-	}
-
 	// Update the Monitored field of the season
-	season.Monitored = *starr.True()
-
+	command.selectedSeason.Monitored = *starr.True()
 	// Convert the updated series to AddSeriesInput
 	input := seriesToAddSeriesInput(command.series)
 	input.Seasons[0].Monitored = *starr.True()
@@ -236,53 +228,19 @@ func (b *Bot) handleLibrarySeriesSeasonMonitor(command *userLibrary) bool {
 		return false
 	}
 
-	// Monitor al episodes of the season
-	var episodeIDs []int64
-	for _, episode := range command.seasonEpisodes {
-		episodeIDs = append(episodeIDs, episode.ID)
-	}
-
-	_, err = b.SonarrServer.MonitorEpisode(episodeIDs, *starr.True())
-	if err != nil {
-		msg := tgbotapi.NewMessage(command.chatID, err.Error())
-		b.sendMessage(msg)
-		return false
-	}
-
 	b.setLibraryState(command.chatID, command)
 	return b.showLibrarySeriesSeasonDetail(command)
 }
 
 func (b *Bot) handleLibrarySeriesSeasonUnmonitor(command *userLibrary) bool {
 	// Access the specific season
-	season := getSeasonByNumber(command.series, command.selectedSeason)
-	if season == nil {
-		log.Println("Invalid season number:", command.selectedSeason)
-		return false
-	}
-
+	season := command.selectedSeason
 	// Update the Monitored field of the season
 	season.Monitored = *starr.False()
-
 	// Convert the updated series to AddSeriesInput
 	input := seriesToAddSeriesInput(command.series)
-
 	// Update the series on the server
 	_, err := b.SonarrServer.UpdateSeries(input, *starr.False())
-	if err != nil {
-		msg := tgbotapi.NewMessage(command.chatID, err.Error())
-		b.sendMessage(msg)
-		return false
-	}
-
-	// Unmonitor al episodes of the season
-	var episodeIDs []int64
-	for _, episode := range command.seasonEpisodes {
-		episodeIDs = append(episodeIDs, episode.ID)
-	}
-
-	// does not work
-	_, err = b.SonarrServer.MonitorEpisode(episodeIDs, *starr.False())
 	if err != nil {
 		msg := tgbotapi.NewMessage(command.chatID, err.Error())
 		b.sendMessage(msg)
@@ -294,24 +252,12 @@ func (b *Bot) handleLibrarySeriesSeasonUnmonitor(command *userLibrary) bool {
 }
 
 func (b *Bot) handleLibrarySeriesSeasonSearch(command *userLibrary) bool {
-	// Monitor al episodes of the season
-	var episodeIDs []int64
-	for _, episode := range command.seasonEpisodes {
-		episodeIDs = append(episodeIDs, episode.ID)
-	}
-	_, err := b.SonarrServer.MonitorEpisode(episodeIDs, *starr.True())
-	if err != nil {
-		msg := tgbotapi.NewMessage(command.chatID, err.Error())
-		b.sendMessage(msg)
-		return false
-	}
-
 	cmd := sonarr.CommandRequest{
 		Name:         "SeasonSearch",
 		SeriesID:     command.series.ID,
-		SeasonNumber: command.selectedSeason,
+		SeasonNumber: command.selectedSeason.SeasonNumber,
 	}
-	_, err = b.SonarrServer.SendCommand(&cmd)
+	_, err := b.SonarrServer.SendCommand(&cmd)
 	if err != nil {
 		msg := tgbotapi.NewMessage(command.chatID, err.Error())
 		b.sendMessage(msg)
@@ -323,28 +269,10 @@ func (b *Bot) handleLibrarySeriesSeasonSearch(command *userLibrary) bool {
 }
 
 func (b *Bot) handleLibrarySeriesSeasonMonitorSearchNow(command *userLibrary) bool {
-	// Access the specific season
-	season := getSeasonByNumber(command.series, command.selectedSeason)
-	if season == nil {
-		log.Println("Invalid season number:", command.selectedSeason)
-		return false
-	}
 	// Update the Monitored field of the season
-	season.Monitored = *starr.True()
+	command.selectedSeason.Monitored = *starr.True()
 	input := seriesToAddSeriesInput(command.series)
 	_, err := b.SonarrServer.UpdateSeries(input, *starr.False())
-	if err != nil {
-		msg := tgbotapi.NewMessage(command.chatID, err.Error())
-		b.sendMessage(msg)
-		return false
-	}
-
-	// Monitor al episodes of the season
-	var episodeIDs []int64
-	for _, episode := range command.seasonEpisodes {
-		episodeIDs = append(episodeIDs, episode.ID)
-	}
-	_, err = b.SonarrServer.MonitorEpisode(episodeIDs, *starr.True())
 	if err != nil {
 		msg := tgbotapi.NewMessage(command.chatID, err.Error())
 		b.sendMessage(msg)
@@ -354,7 +282,7 @@ func (b *Bot) handleLibrarySeriesSeasonMonitorSearchNow(command *userLibrary) bo
 	cmd := sonarr.CommandRequest{
 		Name:         "SeasonSearch",
 		SeriesID:     command.series.ID,
-		SeasonNumber: command.selectedSeason,
+		SeasonNumber: command.selectedSeason.SeasonNumber,
 	}
 	_, err = b.SonarrServer.SendCommand(&cmd)
 	if err != nil {
@@ -367,13 +295,9 @@ func (b *Bot) handleLibrarySeriesSeasonMonitorSearchNow(command *userLibrary) bo
 	return b.showLibrarySeriesSeasonDetail(command)
 }
 
-func (b *Bot) handleLibrarySeasonDeleteSeason(command *userLibrary) bool {
+func (b *Bot) handleLibrarySeasonDeleteSeasonUnmonitor(command *userLibrary) bool {
 	// Access the specific season
-	season := getSeasonByNumber(command.series, command.selectedSeason)
-	if season == nil {
-		log.Println("Invalid season number:", command.selectedSeason)
-		return false
-	}
+	season := command.selectedSeason
 	episodes, err := b.SonarrServer.GetSeriesEpisodeFiles(command.series.ID)
 	if err != nil {
 		msg := tgbotapi.NewMessage(command.chatID, err.Error())
@@ -388,9 +312,21 @@ func (b *Bot) handleLibrarySeasonDeleteSeason(command *userLibrary) bool {
 				b.sendMessage(msg)
 				return false
 			}
-
 		}
+	}
 
+	if season.Monitored {
+		// Update the Monitored field of the season
+		season.Monitored = *starr.False()
+		// Convert the updated series to AddSeriesInput
+		input := seriesToAddSeriesInput(command.series)
+		// Update the series on the server
+		_, err := b.SonarrServer.UpdateSeries(input, *starr.False())
+		if err != nil {
+			msg := tgbotapi.NewMessage(command.chatID, err.Error())
+			b.sendMessage(msg)
+			return false
+		}
 	}
 
 	series, err := b.SonarrServer.GetSeriesByID(command.series.ID)
@@ -400,6 +336,15 @@ func (b *Bot) handleLibrarySeasonDeleteSeason(command *userLibrary) bool {
 		return false
 	}
 	command.series = series
+
+	// get all episodeFiles
+	episodeFiles, err := b.SonarrServer.GetSeriesEpisodeFiles(series.ID)
+	if err != nil {
+		msg := tgbotapi.NewMessage(command.chatID, err.Error())
+		b.sendMessage(msg)
+		return false
+	}
+	command.allEpisodeFiles = episodeFiles
 
 	b.setLibraryState(command.chatID, command)
 	return b.showLibrarySeriesSeasonDetail(command)

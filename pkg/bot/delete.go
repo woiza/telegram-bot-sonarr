@@ -102,7 +102,7 @@ func (b *Bot) deleteSeries(update tgbotapi.Update) bool {
 		command.page = totalPages - 1
 		return b.showDeleteSerieSelection(command)
 	case DeleteSeriesConfirm:
-		return b.processSerieSelectionForDelete(command)
+		return b.processSeriesSelectionForDelete(command)
 	case DeleteSeriesYes:
 		return b.handleDeleteSeriesYes(update, command)
 	case DeleteSeriesGoBack:
@@ -231,21 +231,21 @@ func (b *Bot) handleDeleteSearchResults(searchResults []*sonarr.Series, command 
 		command.selectedSeries = make([]*sonarr.Series, len(SeriesInLibrary))
 		command.selectedSeries[0] = SeriesInLibrary[0]
 		b.setDeleteSeriesState(command.chatID, command)
-		b.processSerieSelectionForDelete(command)
+		b.processSeriesSelectionForDelete(command)
 	} else {
 		command.seriesForSelection = SeriesInLibrary
 		b.setDeleteSeriesState(command.chatID, command)
 		b.showDeleteSerieSelection(command)
 	}
 }
-func (b *Bot) processSerieSelectionForDelete(command *userDeleteSeries) bool {
+func (b *Bot) processSeriesSelectionForDelete(command *userDeleteSeries) bool {
 	var keyboard tgbotapi.InlineKeyboardMarkup
 	var messageText strings.Builder
 	var disablePreview bool
 	switch len(command.selectedSeries) {
 	case 1:
 		keyboard = b.createKeyboard(
-			[]string{"Yes, delete this Series", "Cancel, clear command", "\U0001F519"},
+			[]string{"Yes, delete this series", "Cancel - clear command", "\U0001F519"},
 			[]string{DeleteSeriesYes, DeleteSeriesCancel, DeleteSeriesGoBack},
 		)
 		fmt.Fprintf(&messageText, "Do you want to delete the following series including all files?\n\n")
@@ -256,7 +256,7 @@ func (b *Bot) processSerieSelectionForDelete(command *userDeleteSeries) bool {
 		return b.showDeleteSerieSelection(command)
 	default:
 		keyboard = b.createKeyboard(
-			[]string{"Yes, delete these Series", "Cancel, clear command", "\U0001F519"},
+			[]string{"Yes, delete these series", "Cancel - clear command", "\U0001F519"},
 			[]string{DeleteSeriesYes, DeleteSeriesCancel, DeleteSeriesGoBack},
 		)
 

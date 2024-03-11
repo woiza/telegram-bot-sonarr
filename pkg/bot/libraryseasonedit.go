@@ -195,13 +195,13 @@ func (b *Bot) showLibrarySeriesSeasonDetail(command *userLibrary) bool {
 
 	if season.Monitored && len(seasonEpisodeFiles) == 0 {
 		keyboard = b.createKeyboard(
-			[]string{"Search Season", "Unmonitor Season", "\U0001F519"},
-			[]string{LibrarySeasonSearch, LibrarySeasonUnmonitor, LibrarySeasonGoBack},
+			[]string{"Unmonitor Season", "Search Season", "\U0001F519"},
+			[]string{LibrarySeasonUnmonitor, LibrarySeasonSearch, LibrarySeasonGoBack},
 		)
 	} else if season.Monitored && len(seasonEpisodeFiles) > 0 {
 		keyboard = b.createKeyboard(
-			[]string{"Search Season", "Unmonitor Season", "Delete Season & unmonitor", "\U0001F519"},
-			[]string{LibrarySeasonSearch, LibrarySeasonUnmonitor, LibrarySeasonDelete, LibrarySeasonGoBack},
+			[]string{"Unmonitor Season", "Search Season", "Delete Season & Unmonitor", "\U0001F519"},
+			[]string{LibrarySeasonUnmonitor, LibrarySeasonSearch, LibrarySeasonDelete, LibrarySeasonGoBack},
 		)
 	} else if !season.Monitored && len(seasonEpisodeFiles) == 0 {
 		keyboard = b.createKeyboard(
@@ -210,7 +210,7 @@ func (b *Bot) showLibrarySeriesSeasonDetail(command *userLibrary) bool {
 		)
 	} else if !season.Monitored && len(seasonEpisodeFiles) > 0 {
 		keyboard = b.createKeyboard(
-			[]string{"Monitor Season", "Monitor Season & Search Now", "Delete Season & unmonitor", "\U0001F519"},
+			[]string{"Monitor Season", "Monitor Season & Search Now", "Delete Season & Unmonitor", "\U0001F519"},
 			[]string{LibrarySeasonMonitor, LibrarySeasonMonitorSearchNow, LibrarySeasonDelete, LibrarySeasonGoBack},
 		)
 	}

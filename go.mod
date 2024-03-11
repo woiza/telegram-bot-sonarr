@@ -9,4 +9,4 @@ require (
 
 require golang.org/x/net v0.22.0 // indirect
 
-replace golift.io/starr => ../starr
+replace golift.io/starr v1.0.0 => github.com/woiza/starr v0.0.0-20240311094657-abe7f063757b

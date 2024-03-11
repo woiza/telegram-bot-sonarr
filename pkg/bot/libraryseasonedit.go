@@ -71,7 +71,6 @@ func (b *Bot) librarySeasonEdit(update tgbotapi.Update) bool {
 }
 
 func (b *Bot) showLibrarySeason(command *userLibrary) bool {
-
 	// Sort series seasons in descending order
 	sort.Slice(command.series.Seasons, func(i, j int) bool {
 		return command.series.Seasons[i].SeasonNumber > command.series.Seasons[j].SeasonNumber
@@ -81,8 +80,14 @@ func (b *Bot) showLibrarySeason(command *userLibrary) bool {
 
 	var seasonKeyboardButtons [][]tgbotapi.InlineKeyboardButton
 	for _, season := range command.series.Seasons {
+		var buttonText string
+		if season.SeasonNumber == 0 {
+			buttonText = "Specials"
+		} else {
+			buttonText = fmt.Sprintf("Season %d", season.SeasonNumber)
+		}
 		row := []tgbotapi.InlineKeyboardButton{
-			tgbotapi.NewInlineKeyboardButtonData(strconv.Itoa(season.SeasonNumber), "SEASON_"+strconv.Itoa(int(season.SeasonNumber))),
+			tgbotapi.NewInlineKeyboardButtonData(buttonText, fmt.Sprintf("SEASON_%d", season.SeasonNumber)),
 		}
 		seasonKeyboardButtons = append(seasonKeyboardButtons, row)
 	}
@@ -148,37 +153,36 @@ func (b *Bot) showLibrarySeriesSeasonDetail(command *userLibrary) bool {
 		lastSearchString = command.lastSeasonSearch.Format("02 Jan 06 - 15:04") // Convert non-zero time to string
 	}
 
-	seasonEpisodes, err := b.SonarrServer.GetSeriesEpisodes(
-		&sonarr.GetEpisode{
-			SeriesID:     series.ID,
-			SeasonNumber: season.SeasonNumber})
-	if err != nil {
-		msg := tgbotapi.NewMessage(command.chatID, err.Error())
-		b.sendMessage(msg)
-		return false
-	}
-	command.seasonEpisodes = seasonEpisodes
+	//get all episodes of a season
+	var seasonEpisodes []*sonarr.Episode
+	for _, episode := range command.allEpisodes {
+		if episode.SeasonNumber == season.SeasonNumber {
+			seasonEpisodes = append(seasonEpisodes, episode)
 
-	//get all episodefils of a season
-	var episodeFiles []*sonarr.EpisodeFile
-	for _, episodeFile := range command.episodeFiles {
-		if episodeFile.SeasonNumber == season.SeasonNumber {
-			episodeFiles = append(episodeFiles, episodeFile)
 		}
 	}
-	// iterate over episodes and get their size
+
+	// iterate over episodes and get their amount and size
+	var episodeFilesCounter int
 	var totalSize int64
-	for _, file := range episodeFiles {
-		totalSize += file.Size
+	for _, file := range command.allEpisodeFiles {
+		if file.SeasonNumber == season.SeasonNumber {
+			episodeFilesCounter++
+			totalSize += file.Size
+		}
 	}
 
 	// Create a message with season details
 	var message strings.Builder
-	fmt.Fprintf(&message, "[%v](https://www.imdb.com/title/%v) \\- _%v_\\- season _%v_\n\n", utils.Escape(series.Title), series.ImdbID, series.Year, season.SeasonNumber)
+	if season.SeasonNumber == 0 {
+		fmt.Fprintf(&message, "[%v](https://www.imdb.com/title/%v) \\- _%v_ \\- Specials\n\n", utils.Escape(series.Title), series.ImdbID, series.Year)
+	} else {
+		fmt.Fprintf(&message, "[%v](https://www.imdb.com/title/%v) \\- _%v_ \\- Season _%v_\n\n", utils.Escape(series.Title), series.ImdbID, series.Year, season.SeasonNumber)
+	}
 	fmt.Fprintf(&message, "Monitored: %s\n", monitorIcon)
 	fmt.Fprintf(&message, "Last Manual Search: %s\n", utils.Escape(lastSearchString))
 	fmt.Fprintf(&message, "Episodes: %d\n", len(seasonEpisodes))
-	fmt.Fprintf(&message, "Episodes on Disk: %d\n", len(episodeFiles))
+	fmt.Fprintf(&message, "Episodes on Disk: %d\n", episodeFilesCounter)
 	fmt.Fprintf(&message, "Size: %d GB\n", totalSize/(1024*1024*1024))
 
 	messageText := message.String()
@@ -208,6 +212,7 @@ func (b *Bot) showLibrarySeriesSeasonDetail(command *userLibrary) bool {
 	b.sendMessage(editMsg)
 	return false
 }
+
 func (b *Bot) handleLibrarySeriesSeasonMonitor(command *userLibrary) bool {
 	// Access the specific season
 	season := getSeasonByNumber(command.series, command.selectedSeason)
@@ -289,13 +294,24 @@ func (b *Bot) handleLibrarySeriesSeasonUnmonitor(command *userLibrary) bool {
 }
 
 func (b *Bot) handleLibrarySeriesSeasonSearch(command *userLibrary) bool {
-	cmd := sonarr.CommandRequest{
-		Name: "SeasonSearch",
-		// missing in starr
-		//seasonNumber: command.selectedSeason.SeasonNumber,
-		SeriesID: command.series.ID,
+	// Monitor al episodes of the season
+	var episodeIDs []int64
+	for _, episode := range command.seasonEpisodes {
+		episodeIDs = append(episodeIDs, episode.ID)
 	}
-	_, err := b.SonarrServer.SendCommand(&cmd)
+	_, err := b.SonarrServer.MonitorEpisode(episodeIDs, *starr.True())
+	if err != nil {
+		msg := tgbotapi.NewMessage(command.chatID, err.Error())
+		b.sendMessage(msg)
+		return false
+	}
+
+	cmd := sonarr.CommandRequest{
+		Name:         "SeasonSearch",
+		SeriesID:     command.series.ID,
+		SeasonNumber: command.selectedSeason,
+	}
+	_, err = b.SonarrServer.SendCommand(&cmd)
 	if err != nil {
 		msg := tgbotapi.NewMessage(command.chatID, err.Error())
 		b.sendMessage(msg)
@@ -323,11 +339,22 @@ func (b *Bot) handleLibrarySeriesSeasonMonitorSearchNow(command *userLibrary) bo
 		return false
 	}
 
+	// Monitor al episodes of the season
+	var episodeIDs []int64
+	for _, episode := range command.seasonEpisodes {
+		episodeIDs = append(episodeIDs, episode.ID)
+	}
+	_, err = b.SonarrServer.MonitorEpisode(episodeIDs, *starr.True())
+	if err != nil {
+		msg := tgbotapi.NewMessage(command.chatID, err.Error())
+		b.sendMessage(msg)
+		return false
+	}
+
 	cmd := sonarr.CommandRequest{
-		Name: "SeasonSearch",
-		// missing in starr
-		//seasonNumber: command.selectedSeason.SeasonNumber,
-		SeriesID: command.series.ID,
+		Name:         "SeasonSearch",
+		SeriesID:     command.series.ID,
+		SeasonNumber: command.selectedSeason,
 	}
 	_, err = b.SonarrServer.SendCommand(&cmd)
 	if err != nil {

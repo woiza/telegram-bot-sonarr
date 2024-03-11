@@ -62,7 +62,8 @@ type userLibrary struct {
 	selectedMonitoring     bool
 	series                 *sonarr.Series
 	seasonEpisodes         []*sonarr.Episode
-	episodeFiles           []*sonarr.EpisodeFile
+	allEpisodes            []*sonarr.Episode
+	allEpisodeFiles        []*sonarr.EpisodeFile
 	seriesSeasons          map[int]*sonarr.Season
 	selectedSeason         int
 	lastSeriesSearch       time.Time

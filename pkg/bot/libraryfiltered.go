@@ -111,10 +111,6 @@ func (b *Bot) showLibrarySeriesDetail(update tgbotapi.Update, command *userLibra
 	for _, season := range command.series.Seasons {
 		number := season.SeasonNumber
 		command.seriesSeasons[number] = season
-		// statistics missing/broken
-		// 	fmt.Printf("Season number: %+v\n", season.SeasonNumber)
-		// 	fmt.Printf("Season monitored: %+v\n", season.Monitored)
-		// 	fmt.Printf("Season statistics: %+v\n", season.Statistics)
 	}
 
 	command.selectedMonitoring = series.Monitored
@@ -135,6 +131,18 @@ func (b *Bot) showLibrarySeriesDetail(update tgbotapi.Update, command *userLibra
 		lastSearchString = command.lastSeriesSearch.Format("02 Jan 06 - 15:04") // Convert non-zero time to string
 	}
 
+	// get all episodes
+	episodes, err := b.SonarrServer.GetSeriesEpisodes(
+		&sonarr.GetEpisode{
+			SeriesID: series.ID,
+		})
+	if err != nil {
+		msg := tgbotapi.NewMessage(command.chatID, err.Error())
+		b.sendMessage(msg)
+		return false
+	}
+	command.allEpisodes = episodes
+
 	// get all episodeFiles
 	episodeFiles, err := b.SonarrServer.GetSeriesEpisodeFiles(series.ID)
 	if err != nil {
@@ -142,7 +150,7 @@ func (b *Bot) showLibrarySeriesDetail(update tgbotapi.Update, command *userLibra
 		b.sendMessage(msg)
 		return false
 	}
-	command.episodeFiles = episodeFiles
+	command.allEpisodeFiles = episodeFiles
 
 	// iterate over episodes and get their size
 	var totalSize int64

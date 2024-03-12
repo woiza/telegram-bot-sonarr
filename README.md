@@ -15,17 +15,17 @@ This bot is built using [golift/starr](https://github.com/golift/starr/) and [go
 Once a series is found, the bot offers options to add the series to your Sonarr library along with various monitoring settings. If you have only one root folder and one quality profile, the bot will automatically select the first option for you. However, if multiple choices exist, you will be prompted to select a root folder and a quality profile. If you have tags defined in Sonarr, you can select them as well.
 
 <img src="screenshots/add_links.png?raw=true" alt="qlinks" title="add series" width="300" />
-<img src="screenshots/add_confirmation.png?raw=true" alt="qconfirmation" title="add series" width="300" />
-<img src="screenshots/add_monitoring.png?raw=true" alt="qmonitoring" title="add series" width="300" />
-<img src="screenshots/add_search.png?raw=true" alt="qsearch" title="add series" width="300" />
+<img src="screenshots/add_confirmation.png?raw=true" alt="qconfirmation" title="add confirmation" width="300" />
+<img src="screenshots/add_monitoring.png?raw=true" alt="qmonitoring" title="add monitoring" width="300" />
+<img src="screenshots/add_search.png?raw=true" alt="qsearch" title="add search" width="300" />
 
 ### Series Management
 ``/library [series]`` or ``/l [series]``: Manage series in your library. Allows editing a series' quality profile (if more than one is configured in Sonarr) and tags. Furthermore, you can monitor/unmonitor a series, delete it, search for it, edit/delete/search its seasons, and see disk usage. Series/title is optional. If omitted, a filter menu is shown.
 
 <img src="screenshots/library.png?raw=true" alt="l" title="library" width="300" />
 <img src="screenshots/library_series.png?raw=true" alt="lseries" title="library series" width="300" />
-<img src="screenshots/library_seasons.png?raw=true" alt="lseasons" title="library series" width="300" />
-<img src="screenshots/library_season.png?raw=true" alt="lseason" title="library series" width="300" />
+<img src="screenshots/library_seasons.png?raw=true" alt="lseasons" title="library seasons" width="300" />
+<img src="screenshots/library_season.png?raw=true" alt="lseason" title="library season" width="300" />
 
 
 

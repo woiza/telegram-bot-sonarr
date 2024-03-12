@@ -41,9 +41,10 @@ This command clears all previously issued commands and resets the bot's state. I
 ### Library Management
 - ``/up`` or ``/upcoming``: List upcoming episodes in the next 30 days
 - ``/rss``: Initiate an RSS sync
+<!---
 - ``/searchmonitored``: Search all monitored series/episodes
 - ``/updateall``: Update metadata and rescan files/folders for all series/episodes
-
+-->
 
 ### System Information
 - ``/free`` or ``/diskspace``: Display free space of disks connected to your Sonarr server

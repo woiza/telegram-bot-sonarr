@@ -87,59 +87,61 @@ func (b *Bot) handleCommand(update tgbotapi.Update, s *sonarr.Sonarr) {
 		msg.Text = "RSS sync started"
 		b.sendMessage(msg)
 
-	case "searchmonitored":
-		series, err := s.GetSeries(0)
-		if err != nil {
-			msg.Text = err.Error()
-			fmt.Println(err)
-			b.sendMessage(msg)
-			break
-		}
-		var monitoredSeriesIDs []int64
-		for _, series := range series {
-			if series.Monitored {
-				monitoredSeriesIDs = append(monitoredSeriesIDs, series.ID)
-			}
-		}
-		command := sonarr.CommandRequest{
-			Name:      "SeriesSearch",
-			SeriesIDs: monitoredSeriesIDs,
-		}
-		_, err = s.SendCommand(&command)
-		if err != nil {
-			msg.Text = err.Error()
-			fmt.Println(err)
-			b.sendMessage(msg)
-			break
-		}
-		msg.Text = "Search for monitored series started"
-		b.sendMessage(msg)
+	// does not work
+	// case "searchmonitored":
+	// 	series, err := s.GetSeries(0)
+	// 	if err != nil {
+	// 		msg.Text = err.Error()
+	// 		fmt.Println(err)
+	// 		b.sendMessage(msg)
+	// 		break
+	// 	}
+	// 	var monitoredSeriesIDs []int64
+	// 	for _, series := range series {
+	// 		if series.Monitored {
+	// 			monitoredSeriesIDs = append(monitoredSeriesIDs, series.ID)
+	// 		}
+	// 	}
+	// 	command := sonarr.CommandRequest{
+	// 		Name:      "SeriesSearch",
+	// 		SeriesIDs: monitoredSeriesIDs,
+	// 	}
+	// 	_, err = s.SendCommand(&command)
+	// 	if err != nil {
+	// 		msg.Text = err.Error()
+	// 		fmt.Println(err)
+	// 		b.sendMessage(msg)
+	// 		break
+	// 	}
+	// 	msg.Text = "Search for monitored series started"
+	// 	b.sendMessage(msg)
 
-	case "updateAll", "updateall":
-		series, err := s.GetSeries(0)
-		if err != nil {
-			msg.Text = err.Error()
-			fmt.Println(err)
-			b.sendMessage(msg)
-			break
-		}
-		var allSeriesIDs []int64
-		for _, series := range series {
-			allSeriesIDs = append(allSeriesIDs, series.ID)
-		}
-		command := sonarr.CommandRequest{
-			Name:      "RefresSeries",
-			SeriesIDs: allSeriesIDs,
-		}
-		_, err = s.SendCommand(&command)
-		if err != nil {
-			msg.Text = err.Error()
-			fmt.Println(err)
-			b.sendMessage(msg)
-			break
-		}
-		msg.Text = "Update All started"
-		b.sendMessage(msg)
+	// does not work
+	// case "updateAll", "updateall":
+	// 	series, err := s.GetSeries(0)
+	// 	if err != nil {
+	// 		msg.Text = err.Error()
+	// 		fmt.Println(err)
+	// 		b.sendMessage(msg)
+	// 		break
+	// 	}
+	// 	var allSeriesIDs []int64
+	// 	for _, series := range series {
+	// 		allSeriesIDs = append(allSeriesIDs, series.ID)
+	// 	}
+	// 	command := sonarr.CommandRequest{
+	// 		Name:      "RefresSeries",
+	// 		SeriesIDs: allSeriesIDs,
+	// 	}
+	// 	_, err = s.SendCommand(&command)
+	// 	if err != nil {
+	// 		msg.Text = err.Error()
+	// 		fmt.Println(err)
+	// 		b.sendMessage(msg)
+	// 		break
+	// 	}
+	// 	msg.Text = "Update All started"
+	// 	b.sendMessage(msg)
 
 	case "system", "System", "systemstatus", "Systemstatus":
 		status, err := s.GetSystemStatus()

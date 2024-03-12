@@ -169,8 +169,8 @@ func (b *Bot) handleCommand(update tgbotapi.Update, s *sonarr.Sonarr) {
 		msg.Text += "/free  - lists free disk space \n"
 		msg.Text += "/up\t\t\t\t - lists upcoming episodes in the next 30 days\n"
 		msg.Text += "/rss \t\t - performs a RSS sync\n"
-		msg.Text += "/searchmonitored - searches all monitored series\n"
-		msg.Text += "/updateall - updates metadata and rescans files/folders\n"
+		//msg.Text += "/searchmonitored - searches all monitored series\n"
+		//msg.Text += "/updateall - updates metadata and rescans files/folders\n"
 		msg.Text += "/system - shows your Sonarr configuration\n"
 		msg.Text += "/id - shows your Telegram user ID"
 		b.sendMessage(msg)

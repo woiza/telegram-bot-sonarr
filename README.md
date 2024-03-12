@@ -16,7 +16,7 @@ Once a series is found, the bot offers options to add the series to your Sonarr 
 
 <img src="screenshots/add_links.png?raw=true" alt="qlinks" title="add series" width="300" />
 <img src="screenshots/add_confirmation.png?raw=true" alt="qconfirmation" title="add confirmation" width="300" />
-<img src="screenshots/add_monitoring.png?raw=true" alt="qmonitoring" title="add monitoring" width="300" />
+<img src="screenshots/add_monitor.png?raw=true" alt="qmonitoring" title="add monitoring" width="300" />
 <img src="screenshots/add_search.png?raw=true" alt="qsearch" title="add search" width="300" />
 
 ### Series Management

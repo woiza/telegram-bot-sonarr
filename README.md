@@ -98,8 +98,6 @@ clear - deletes all previously sent commands
 free - lists the free space of your disks
 up - lists upcoming episodes in the next 30 days
 rss - performs a RSS sync
-searchmonitored - searches all monitored series
-updateall - updates metadata and rescan files/folders
 system - shows your Sonarr configuration
 id - shows your Telegram user ID
 ```

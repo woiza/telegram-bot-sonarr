@@ -35,25 +35,25 @@ const (
 	FilterSearchResults   = "FILTER_SEARCHRESULTS"
 )
 
-func (b *Bot) processLibraryCommand(update tgbotapi.Update, userID int64, s *sonarr.Sonarr) {
-	msg := tgbotapi.NewMessage(userID, "Handling library command... please wait")
+func (b *Bot) processLibraryCommand(update tgbotapi.Update, chatID int64, s *sonarr.Sonarr) {
+	msg := tgbotapi.NewMessage(chatID, "Handling library command... please wait")
 	message, _ := b.sendMessage(msg)
 
 	qualityProfiles, err := s.GetQualityProfiles()
 	if err != nil {
-		msg := tgbotapi.NewMessage(userID, err.Error())
+		msg := tgbotapi.NewMessage(chatID, err.Error())
 		b.sendMessage(msg)
 		return
 	}
 	tags, err := s.GetTags()
 	if err != nil {
-		msg := tgbotapi.NewMessage(userID, err.Error())
+		msg := tgbotapi.NewMessage(chatID, err.Error())
 		b.sendMessage(msg)
 		return
 	}
 	series, err := s.GetSeries(0)
 	if err != nil {
-		msg := tgbotapi.NewMessage(userID, err.Error())
+		msg := tgbotapi.NewMessage(chatID, err.Error())
 		b.sendMessage(msg)
 		return
 	}
@@ -69,14 +69,14 @@ func (b *Bot) processLibraryCommand(update tgbotapi.Update, userID int64, s *son
 	criteria := update.Message.CommandArguments()
 	// no search criteria --> show menu and return
 	if len(criteria) < 1 {
-		b.setLibraryState(userID, &command)
+		b.setLibraryState(chatID, &command)
 		b.showLibraryMenu(&command)
 		return
 	}
 
 	searchResults, err := s.Lookup("\"" + criteria + "\"")
 	if err != nil {
-		msg := tgbotapi.NewMessage(userID, err.Error())
+		msg := tgbotapi.NewMessage(chatID, err.Error())
 		b.sendMessage(msg)
 		return
 	}
@@ -86,20 +86,20 @@ func (b *Bot) processLibraryCommand(update tgbotapi.Update, userID int64, s *son
 }
 
 func (b *Bot) libraryMenu(update tgbotapi.Update) bool {
-	userID, err := b.getUserID(update)
+	chatID, err := b.getChatID(update)
 	if err != nil {
 		fmt.Printf("Cannot manage library: %v", err)
 		return false
 	}
 
-	command, exists := b.getLibraryState(userID)
+	command, exists := b.getLibraryState(chatID)
 	if !exists {
 		return false
 	}
 	switch update.CallbackQuery.Data {
 	case LibraryFilteredGoBack:
 		command.filter = ""
-		b.setActiveCommand(userID, LibraryMenuActive)
+		b.setActiveCommand(chatID, LibraryMenuActive)
 		b.setLibraryState(command.chatID, command)
 		return b.showLibraryMenu(command)
 	case LibraryMenu:

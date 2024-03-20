@@ -24,13 +24,13 @@ const (
 	DeleteSeriesLastPage     = "DELETE_SERIES_LAST_PAGE"
 )
 
-func (b *Bot) processDeleteCommand(update tgbotapi.Update, userID int64, s *sonarr.Sonarr) {
-	msg := tgbotapi.NewMessage(userID, "Handling delete command... please wait")
+func (b *Bot) processDeleteCommand(update tgbotapi.Update, chatID int64, s *sonarr.Sonarr) {
+	msg := tgbotapi.NewMessage(chatID, "Handling delete command... please wait")
 	message, _ := b.sendMessage(msg)
 
 	series, err := s.GetSeries(0)
 	if err != nil {
-		msg := tgbotapi.NewMessage(userID, err.Error())
+		msg := tgbotapi.NewMessage(chatID, err.Error())
 		b.sendMessage(msg)
 		return
 	}
@@ -49,7 +49,7 @@ func (b *Bot) processDeleteCommand(update tgbotapi.Update, userID int64, s *sona
 	command.seriesForSelection = series
 	command.chatID = message.Chat.ID
 	command.messageID = message.MessageID
-	b.setDeleteSeriesState(userID, &command)
+	b.setDeleteSeriesState(chatID, &command)
 
 	criteria := update.Message.CommandArguments()
 	// no search criteria --> show complete library and return
@@ -61,23 +61,23 @@ func (b *Bot) processDeleteCommand(update tgbotapi.Update, userID int64, s *sona
 	//update.Message.Text = fmt.Sprintf("/q \"%s\"", update.Message.Text)
 	searchResults, err := s.Lookup("\"" + criteria + "\"")
 	if err != nil {
-		msg := tgbotapi.NewMessage(userID, err.Error())
+		msg := tgbotapi.NewMessage(chatID, err.Error())
 		b.sendMessage(msg)
 		return
 	}
 
-	b.setDeleteSeriesState(userID, &command)
+	b.setDeleteSeriesState(chatID, &command)
 	b.handleDeleteSearchResults(searchResults, &command)
 
 }
 func (b *Bot) deleteSeries(update tgbotapi.Update) bool {
-	userID, err := b.getUserID(update)
+	chatID, err := b.getChatID(update)
 	if err != nil {
 		fmt.Printf("Cannot delete Series: %v", err)
 		return false
 	}
 
-	command, exists := b.getDeleteSeriesState(userID)
+	command, exists := b.getDeleteSeriesState(chatID)
 	if !exists {
 		return false
 	}

@@ -29,8 +29,8 @@ const (
 	AddSeriesCutOff           = "ADDSERIES_CUTOFF"
 )
 
-func (b *Bot) processAddCommand(update tgbotapi.Update, userID int64, s *sonarr.Sonarr) {
-	msg := tgbotapi.NewMessage(userID, "Handling add series ommand... please wait")
+func (b *Bot) processAddCommand(update tgbotapi.Update, chatID int64, s *sonarr.Sonarr) {
+	msg := tgbotapi.NewMessage(chatID, "Handling add series ommand... please wait")
 	message, _ := b.sendMessage(msg)
 	command := userAddSeries{
 		chatID:    message.Chat.ID,
@@ -44,7 +44,7 @@ func (b *Bot) processAddCommand(update tgbotapi.Update, userID int64, s *sonarr.
 	}
 	searchResults, err := s.Lookup("\"" + criteria + "\"")
 	if err != nil {
-		msg := tgbotapi.NewMessage(userID, err.Error())
+		msg := tgbotapi.NewMessage(chatID, err.Error())
 		b.sendMessage(msg)
 		return
 	}
@@ -70,18 +70,18 @@ func (b *Bot) processAddCommand(update tgbotapi.Update, userID int64, s *sonarr.
 }
 
 func (b *Bot) addSeries(update tgbotapi.Update) bool {
-	userID, err := b.getUserID(update)
+	chatID, err := b.getChatID(update)
 	if err != nil {
 		fmt.Printf("Cannot add series: %v", err)
 		return false
 	}
-	command, exists := b.getAddSeriesState(userID)
+	command, exists := b.getAddSeriesState(chatID)
 	if !exists {
 		return false
 	}
 	switch update.CallbackQuery.Data {
 	case AddSeriesYes:
-		b.setActiveCommand(userID, AddSeriesCommand)
+		b.setActiveCommand(chatID, AddSeriesCommand)
 		return b.handleAddSeriesYes(update, command)
 	case AddSeriesGoBack:
 		b.setAddSeriesState(command.chatID, command)

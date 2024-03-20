@@ -11,7 +11,7 @@ import (
 // BotConfig ...
 type Config struct {
 	TelegramBotToken string
-	AllowedUserIDs   map[int64]bool
+	AllowedChatIDs   map[int64]bool
 	MaxItems         int
 	SonarrProtocol   string
 	SonarrHostname   string
@@ -72,7 +72,7 @@ func LoadConfig() (Config, error) {
 		}
 		parsedUserIDs[parsedID] = true
 	}
-	config.AllowedUserIDs = parsedUserIDs
+	config.AllowedChatIDs = parsedUserIDs
 
 	// Parsing SBOT_SONARR_PORT as a number
 	port, err := strconv.Atoi(sonarrPort)

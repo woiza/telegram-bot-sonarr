@@ -28,13 +28,13 @@ const (
 )
 
 func (b *Bot) librarySeasonEdit(update tgbotapi.Update) bool {
-	userID, err := b.getUserID(update)
+	chatID, err := b.getChatID(update)
 	if err != nil {
 		fmt.Printf("Cannot manage library: %v", err)
 		return false
 	}
 
-	command, exists := b.getLibraryState(userID)
+	command, exists := b.getLibraryState(chatID)
 	if !exists {
 		return false
 	}
@@ -44,7 +44,7 @@ func (b *Bot) librarySeasonEdit(update tgbotapi.Update) bool {
 	case LibrarySeasonEditSubmitChanges:
 		return b.handleLibrarySeasonEditSubmitChanges(update, command)
 	case LibrarySeasonEditGoBack:
-		b.setActiveCommand(userID, LibraryFilteredActive)
+		b.setActiveCommand(chatID, LibraryFilteredActive)
 		b.setLibraryState(command.chatID, command)
 		return b.showLibrarySeriesDetail(update, command)
 	case LibrarySeasonEditCancel:

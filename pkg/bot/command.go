@@ -12,27 +12,27 @@ import (
 
 func (b *Bot) handleCommand(update tgbotapi.Update, s *sonarr.Sonarr) {
 
-	userID, err := b.getUserID(update)
+	chatID, err := b.getChatID(update)
 	if err != nil {
 		fmt.Printf("Cannot handle command: %v", err)
 		return
 	}
 
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
+	msg := tgbotapi.NewMessage(chatID, "")
 
 	switch update.Message.Command() {
 
 	case "q", "query", "add", "Q", "Query", "Add":
-		b.setActiveCommand(userID, AddSeriesCommand)
-		b.processAddCommand(update, userID, s)
+		b.setActiveCommand(chatID, AddSeriesCommand)
+		b.processAddCommand(update, chatID, s)
 
 	case "series", "library", "l":
-		b.setActiveCommand(userID, LibraryMenuCommand)
-		b.processLibraryCommand(update, userID, s)
+		b.setActiveCommand(chatID, LibraryMenuCommand)
+		b.processLibraryCommand(update, chatID, s)
 
 	case "delete", "remove", "Delete", "Remove", "d":
-		b.setActiveCommand(userID, DeleteSeriesCommand)
-		b.processDeleteCommand(update, userID, s)
+		b.setActiveCommand(chatID, DeleteSeriesCommand)
+		b.processDeleteCommand(update, chatID, s)
 
 	case "clear", "cancel", "stop":
 		b.clearState(update)
@@ -151,12 +151,11 @@ func (b *Bot) handleCommand(update tgbotapi.Update, s *sonarr.Sonarr) {
 			b.sendMessage(msg)
 			break
 		}
-		message := prettyPrint(status)
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, message)
+		msg.Text = prettyPrint(status)
 		b.sendMessage(msg)
 
 	case "getid", "id":
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Your user ID: %d", userID))
+		msg.Text = fmt.Sprintf("Your user ID: %d", chatID)
 		b.sendMessage(msg)
 
 	default:

@@ -81,7 +81,7 @@ services:
         restart: always
         environment:
             - SBOT_TELEGRAM_BOT_TOKEN=1460...:AAHlBW_mabVg...
-            - SBOT_BOT_ALLOWED_USERIDS=12345,98765,45678 # Telegram user ID(s)
+            - SBOT_BOT_ALLOWED_USERIDS=123,987,-567 # Telegram user ID(s), Group IDs are negative
             - SBOT_BOT_MAX_ITEMS=10 # pagination
             - SBOT_SONARR_PROTOCOL=http # http or https
             - SBOT_SONARR_PORT=8989

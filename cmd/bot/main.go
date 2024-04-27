@@ -30,7 +30,7 @@ func main() {
 
 	fmt.Printf("Authorized on account %v\n", b.Self.UserName)
 
-	sonarrConfig := starr.New(config.SonarrAPIKey, fmt.Sprintf("%v://%v:%v", config.SonarrProtocol, config.SonarrHostname, config.SonarrPort), 0)
+	sonarrConfig := starr.New(config.SonarrAPIKey, fmt.Sprintf("%v://%v:%v%v", config.SonarrProtocol, config.SonarrHostname, config.SonarrPort, config.SonarrBaseUrl), 0)
 	sonarrServer := sonarr.New(sonarrConfig)
 
 	botInstance := bot.New(&config, b, sonarrServer)

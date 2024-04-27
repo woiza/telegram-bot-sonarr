@@ -86,6 +86,7 @@ services:
             - SBOT_SONARR_PROTOCOL=http # http or https
             - SBOT_SONARR_PORT=8989
             - SBOT_SONARR_HOSTNAME=192.168.2.2 # IP or hostname
+            - SBOT_SONARR_BASE_URL=/radarr # optional depending on radarr configuration
             - SBOT_SONARR_API_KEY=1010d7...
 ```
 ### Commands for Botfather's /setcommands

@@ -17,6 +17,7 @@ type Config struct {
 	SonarrHostname   string
 	SonarrPort       int
 	SonarrAPIKey     string
+	SonarrBaseUrl    string
 }
 
 func LoadConfig() (Config, error) {
@@ -29,6 +30,7 @@ func LoadConfig() (Config, error) {
 	config.SonarrHostname = os.Getenv("SBOT_SONARR_HOSTNAME")
 	sonarrPort := os.Getenv("SBOT_SONARR_PORT")
 	config.SonarrAPIKey = os.Getenv("SBOT_SONARR_API_KEY")
+	config.SonarrBaseUrl = os.Getenv("SBOT_SONARR_BASE_URL")
 
 	// Validate required fields
 	if config.TelegramBotToken == "" {

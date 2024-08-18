@@ -83,6 +83,7 @@ services:
             - SBOT_TELEGRAM_BOT_TOKEN=1460...:AAHlBW_mabVg...
             - SBOT_BOT_ALLOWED_USERIDS=123,987,-567 # Telegram user ID(s), Group IDs are negative
             - SBOT_BOT_MAX_ITEMS=10 # pagination
+            - SBOT_BOT_IGNORE_TAGS=false # true/false; true = bot will not ask for tags (useful with auto-tagging)
             - SBOT_SONARR_PROTOCOL=http # http or https
             - SBOT_SONARR_PORT=8989
             - SBOT_SONARR_HOSTNAME=192.168.2.2 # IP or hostname

@@ -13,6 +13,7 @@ type Config struct {
 	TelegramBotToken string
 	AllowedChatIDs   map[int64]bool
 	MaxItems         int
+	IgnoreTags       bool
 	SonarrProtocol   string
 	SonarrHostname   string
 	SonarrPort       int
@@ -26,6 +27,7 @@ func LoadConfig() (Config, error) {
 	config.TelegramBotToken = os.Getenv("SBOT_TELEGRAM_BOT_TOKEN")
 	allowedUserIDs := os.Getenv("SBOT_BOT_ALLOWED_USERIDS")
 	botMaxItems := os.Getenv("SBOT_BOT_MAX_ITEMS")
+	botIgnoreTags := os.Getenv("SBOT_BOT_IGNORE_TAGS")
 	config.SonarrProtocol = os.Getenv("SBOT_SONARR_PROTOCOL")
 	config.SonarrHostname = os.Getenv("SBOT_SONARR_HOSTNAME")
 	sonarrPort := os.Getenv("SBOT_SONARR_PORT")
@@ -41,6 +43,9 @@ func LoadConfig() (Config, error) {
 	}
 	if botMaxItems == "" {
 		return config, errors.New("SBOT_BOT_MAX_ITEMS is empty or not set")
+	}
+	if botIgnoreTags == "" {
+		return config, errors.New("SBOT_BOT_IGNORE_TAGS is empty or not set")
 	}
 	// Normalize and validate SBOT_SONARR_PROTOCOL
 	config.SonarrProtocol = strings.ToLower(config.SonarrProtocol)
@@ -63,6 +68,13 @@ func LoadConfig() (Config, error) {
 		return config, errors.New("SBOT_BOT_MAX_ITEMS is not a valid number")
 	}
 	config.MaxItems = maxItems
+
+	// Parsing SBOT_BOT_IGNORE_TAGS as a boolean
+	ignoreTags, err := strconv.ParseBool(botIgnoreTags)
+	if err != nil {
+		return config, errors.New("SBOT_BOT_IGNORE_TAGS is not a valid boolean")
+	}
+	config.IgnoreTags = ignoreTags
 
 	// Parsing SBOT_BOT_ALLOWED_USERIDS as a list of integers
 	userIDs := strings.Split(allowedUserIDs, ",")

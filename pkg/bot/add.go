@@ -102,8 +102,8 @@ func (b *Bot) addSeries(update tgbotapi.Update) bool {
 		}
 		return b.showAddSeriesRootFolders(command)
 	case AddSeriesTypeGoBack:
-		// Check if there are no tags
-		if len(command.allTags) == 0 {
+		// Check if there are no tags or tags should be ignored
+		if len(command.allTags) == 0 || b.Config.IgnoreTags {
 			// Check if there is only one root folder and one profile
 			if len(command.allRootFolders) == 1 && len(command.allProfiles) == 1 {
 				return b.showAddSeriesSearchResults(command)
@@ -380,9 +380,9 @@ func (b *Bot) handleAddSeriesRootFolder(update tgbotapi.Update, command *userAdd
 }
 
 func (b *Bot) showAddSeriesTags(command *userAddSeries) bool {
-	// If there are no tags, skip this step
-	if len(command.allTags) == 0 {
-		return b.showAddSeriesAddOptions(command)
+	// If there are no tags or tags should be ignored, skip this step
+	if len(command.allTags) == 0 || b.Config.IgnoreTags {
+		return b.showAddSeriesType(command)
 	}
 	var tagsKeyboard [][]tgbotapi.InlineKeyboardButton
 	for _, tag := range command.allTags {

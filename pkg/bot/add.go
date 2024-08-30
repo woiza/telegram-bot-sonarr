@@ -276,7 +276,7 @@ func (b *Bot) handleAddSeriesYes(update tgbotapi.Update, command *userAddSeries)
 		return false
 	}
 	if len(rootFolders) == 1 {
-		command.rootFolder = rootFolders[0].Path
+		command.rootFolder = rootFolders[0]
 	}
 	if len(rootFolders) == 0 {
 		b.sendMessageWithEdit(command, "No root folder(s) found on your radarr server.\nAll commands have been cleared.")
@@ -350,7 +350,7 @@ func (b *Bot) showAddSeriesRootFolders(command *userAddSeries) bool {
 	var rootFolderKeyboard [][]tgbotapi.InlineKeyboardButton
 	for _, rootFolder := range command.allRootFolders {
 		row := []tgbotapi.InlineKeyboardButton{
-			tgbotapi.NewInlineKeyboardButtonData(rootFolder.Path, "ROOTFOLDER_"+rootFolder.Path),
+			tgbotapi.NewInlineKeyboardButtonData(rootFolder.Path, "ROOTFOLDER_"+strconv.Itoa(int(rootFolder.ID))),
 		}
 		rootFolderKeyboard = append(rootFolderKeyboard, row)
 	}
@@ -374,7 +374,28 @@ func (b *Bot) showAddSeriesRootFolders(command *userAddSeries) bool {
 }
 
 func (b *Bot) handleAddSeriesRootFolder(update tgbotapi.Update, command *userAddSeries) bool {
-	command.rootFolder = strings.TrimPrefix(update.CallbackQuery.Data, "ROOTFOLDER_")
+	data := strings.TrimPrefix(update.CallbackQuery.Data, "ROOTFOLDER_")
+	id, err := strconv.Atoi(data)
+	if err != nil {
+		msg := tgbotapi.NewMessage(command.chatID, "Invalid root folder selection.")
+		fmt.Println(err)
+		b.sendMessage(msg)
+		return false
+	}
+
+	for folder := range command.allRootFolders {
+		if command.allRootFolders[folder].ID == int64(id) {
+			command.rootFolder = command.allRootFolders[folder]
+			break
+		}
+	}
+	if command.rootFolder == nil {
+		msg := tgbotapi.NewMessage(command.chatID, "Root folder not found.")
+		fmt.Println(err)
+		b.sendMessage(msg)
+		return false
+	}
+
 	b.setAddSeriesState(command.chatID, command)
 	return b.showAddSeriesTags(command)
 }
@@ -609,11 +630,11 @@ func (b *Bot) addSeriesToLibrary(update tgbotapi.Update, command *userAddSeries)
 	}
 
 	addSeriesInput := sonarr.AddSeriesInput{
-		//MinimumAvailability: "announced",
 		TvdbID:           command.series.TvdbID,
 		Title:            command.series.Title,
 		QualityProfileID: command.profileID,
-		RootFolderPath:   command.rootFolder,
+		RootFolderPath:   command.rootFolder.Path,
+		SeriesType:       command.seriesType,
 		AddOptions:       command.addSeriesOptions,
 		Tags:             tagIDs,
 		Monitored:        monitor,

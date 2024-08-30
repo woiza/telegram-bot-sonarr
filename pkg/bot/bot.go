@@ -31,7 +31,7 @@ type userAddSeries struct {
 	allProfiles      []*sonarr.QualityProfile
 	profileID        int64
 	allRootFolders   []*sonarr.RootFolder
-	rootFolder       string
+	rootFolder       *sonarr.RootFolder
 	allTags          []*starr.Tag
 	selectedTags     []int
 	seriesType       string

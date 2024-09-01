@@ -468,6 +468,11 @@ func (b *Bot) handleAddSeriesEditSelectTag(update tgbotapi.Update, command *user
 }
 
 func (b *Bot) showAddSeriesType(command *userAddSeries) bool {
+	// If series type is set in config, skip this step
+	if b.Config.SeriesType != "" {
+		command.seriesType = b.Config.SeriesType
+		return b.showAddSeriesMonitor(command)
+	}
 
 	types := []struct {
 		Text string

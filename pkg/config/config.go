@@ -78,7 +78,7 @@ func LoadConfig() (Config, error) {
 	}
 	config.IgnoreTags = ignoreTags
 
-	// Normalize and validate SBOT_SERIES_TYPE
+	// Normalize and validate SBOT_BOT_SERIES_TYPE
 	if strings.EqualFold(botSeriesType, "standard") {
 		config.SeriesType = "standard"
 	} else if strings.EqualFold(botSeriesType, "daily") {

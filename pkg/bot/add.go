@@ -122,6 +122,9 @@ func (b *Bot) addSeries(update tgbotapi.Update) bool {
 		// If there are tags, go to the tags step
 		return b.showAddSeriesTags(command)
 	case AddSeriesMonitorGoBack:
+		if b.Config.SeriesType != "" {
+			return b.showAddSeriesSearchResults(command)
+		}
 		return b.showAddSeriesType(command)
 	case AddSeriesAddOptionsGoBack:
 		return b.showAddSeriesMonitor(command)

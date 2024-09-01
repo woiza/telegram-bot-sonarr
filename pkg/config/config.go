@@ -14,6 +14,7 @@ type Config struct {
 	AllowedChatIDs   map[int64]bool
 	MaxItems         int
 	IgnoreTags       bool
+	SeriesType       string
 	SonarrProtocol   string
 	SonarrHostname   string
 	SonarrPort       int
@@ -28,6 +29,7 @@ func LoadConfig() (Config, error) {
 	allowedUserIDs := os.Getenv("SBOT_BOT_ALLOWED_USERIDS")
 	botMaxItems := os.Getenv("SBOT_BOT_MAX_ITEMS")
 	botIgnoreTags := os.Getenv("SBOT_BOT_IGNORE_TAGS")
+	botSeriesType := os.Getenv("SBOT_BOT_SERIES_TYPE")
 	config.SonarrProtocol = os.Getenv("SBOT_SONARR_PROTOCOL")
 	config.SonarrHostname = os.Getenv("SBOT_SONARR_HOSTNAME")
 	sonarrPort := os.Getenv("SBOT_SONARR_PORT")
@@ -75,6 +77,17 @@ func LoadConfig() (Config, error) {
 		return config, errors.New("SBOT_BOT_IGNORE_TAGS is not a valid boolean")
 	}
 	config.IgnoreTags = ignoreTags
+
+	// Normalize and validate SBOT_BOT_SERIES_TYPE
+	if strings.EqualFold(botSeriesType, "standard") {
+		config.SeriesType = "standard"
+	} else if strings.EqualFold(botSeriesType, "daily") {
+		config.SeriesType = "daily"
+	} else if strings.EqualFold(botSeriesType, "anime") {
+		config.SeriesType = "anime"
+	} else {
+		config.SeriesType = ""
+	}
 
 	// Parsing SBOT_BOT_ALLOWED_USERIDS as a list of integers
 	userIDs := strings.Split(allowedUserIDs, ",")
